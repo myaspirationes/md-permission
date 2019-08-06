@@ -4,7 +4,7 @@ package com.yodoo.megalodon.permission.contract;
  * @Author houzhen
  * @Date 14:39 2019/7/29
  **/
-public interface ProvisioningConstants {
+public interface PermissionConstants {
 
     /**
      * session中存放登录信息

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -46,6 +47,23 @@ public class UserPermissionDetailsService {
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("userId",userId);
         return userPermissionDetailsMapper.selectByExample(example);
+    }
+
+    /**
+     * 通过用户id查询获取用户权限表 ids
+     * @param userId
+     * @return
+     */
+    public List<Integer> getUserPermissionIdsByUserId(Integer userId){
+        List<UserPermissionDetails> userPermissionDetailsList = this.selectUserPermissionDetailsByUserId(userId);
+        List<Integer> userPermissionIds = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
+            userPermissionIds = userPermissionDetailsList.stream()
+                    .filter(Objects::nonNull)
+                    .map(UserPermissionDetails::getId)
+                    .collect(Collectors.toList());
+        }
+        return userPermissionIds;
     }
 
     /**

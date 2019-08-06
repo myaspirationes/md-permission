@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yodoo.megalodon.permission.mapper.CompanyMapper">
+    <resultMap id="BaseResultMap" type="com.yodoo.megalodon.permission.entity.Company">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="group_id" jdbcType="INTEGER" property="groupId"/>
+        <result column="company_name" jdbcType="VARCHAR" property="companyName"/>
+        <result column="company_code" jdbcType="VARCHAR" property="companyCode"/>
+        <result column="update_cycle" jdbcType="VARCHAR" property="updateCycle"/>
+        <result column="next_update_date" jdbcType="DATE" property="nextUpdateDate"/>
+        <result column="expire_date" jdbcType="DATE" property="expireDate"/>
+        <result column="db_group_id" jdbcType="INTEGER" property="dbGroupId"/>
+        <result column="redis_group_id" jdbcType="INTEGER" property="redisGroupId"/>
+        <result column="swift_project_id" jdbcType="INTEGER" property="swiftProjectId"/>
+        <result column="mq_vhost_id" jdbcType="INTEGER" property="mqVhostId"/>
+        <result column="neo4j_instance_id" jdbcType="INTEGER" property="neo4jInstanceId"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+      id, group_id, company_name, company_code, update_cycle, next_update_date, expire_date,
+      db_group_id, redis_group_id, swift_project_id, mq_vhost_id, neo4j_instance_id, status,
+      create_user, create_time, update_user, update_time
+    </sql>
+
+</mapper>

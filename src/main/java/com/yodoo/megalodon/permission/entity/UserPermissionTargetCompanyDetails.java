@@ -13,7 +13,7 @@ public class UserPermissionTargetCompanyDetails extends BaseEntity {
     private Integer userPermissionId;
 
     /**
-     * 集团id
+     * 公司id
      **/
     private Integer companyId;
 
