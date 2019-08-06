@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yodoo.megalodon.permission.mapper.UserMapper">
+    <resultMap id="BaseResultMap" type="com.yodoo.megalodon.permission.entity.User">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="parent_id" jdbcType="INTEGER" property="parentId"/>
+        <result column="account" jdbcType="VARCHAR" property="account"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="password" jdbcType="VARCHAR" property="password"/>
+        <result column="email" jdbcType="VARCHAR" property="email"/>
+        <result column="region" jdbcType="VARCHAR" property="region"/>
+        <result column="post" jdbcType="VARCHAR" property="post"/>
+        <result column="sex" jdbcType="INTEGER" property="sex"/>
+        <result column="birthday" jdbcType="DATE" property="birthday"/>
+        <result column="phone" jdbcType="VARCHAR" property="phone"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    id, parent_id, account, name, password, email, region, post, sex, birthday, phone, 
+    status, create_user, create_time, update_user, update_time
+  </sql>
+
+</mapper>
