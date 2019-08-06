@@ -17,6 +17,8 @@ import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -30,27 +32,55 @@ public class UserPermissionDetailsService {
 
     private static Logger logger = LoggerFactory.getLogger(UserPermissionDetailsService.class);
 
-
     @Autowired
     private UserPermissionDetailsMapper userPermissionDetailsMapper;
 
     /**
      * 通过用户 id 查询 用户权限列表
+     *
      * @param userId
      * @return
      */
     public List<UserPermissionDetails> selectUserPermissionDetailsByUserId(Integer userId) {
+        Example example = new Example(UserPermissionDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userId",userId);
+        return userPermissionDetailsMapper.selectByExample(example);
+    }
+
+    /**
+     * 通过用户id删除
+     * @param userId
+     * @return
+     */
+    public Integer deleteUserPermissionDetailsByUserId(Integer userId) {
         UserPermissionDetails userPermissionDetails = new UserPermissionDetails();
         userPermissionDetails.setUserId(userId);
-        return userPermissionDetailsMapper.select(userPermissionDetails);
+        return userPermissionDetailsMapper.delete(userPermissionDetails);
+    }
+
+    /**
+     * 添加
+     * @param userId
+     * @param permissionIds
+     */
+    public void insertUserPermissionDetails(Integer userId, Set<Integer> permissionIds) {
+        if (!CollectionUtils.isEmpty(permissionIds)) {
+            permissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(permissionId -> {
+                        return userPermissionDetailsMapper.insertSelective(new UserPermissionDetails(userId, permissionId));
+                    }).filter(Objects::nonNull).count();
+        }
     }
 
     /**
      * 变更权限
      * @Author houzhen
      * @Date 10:23 2019/8/6
-    **/
-    public void updateUserPermission(List<UserPermissionDetailsDto> userPermissionDetailsDtoList, Integer userId) {
+     **/
+    public void updateUserPermission (List < UserPermissionDetailsDto > userPermissionDetailsDtoList, Integer userId)
+    {
         logger.info("UserPermissionDetailsService.updateUserPermission userPermissionDetailsDtoList:{}", JsonUtils.obj2json(userPermissionDetailsDtoList));
         // 参数判断
         if (userId == null) {
@@ -64,7 +94,7 @@ public class UserPermissionDetailsService {
         userPermissionDetailsMapper.deleteByExample(example);
         // 增加修改后的权限
         if (!CollectionUtils.isEmpty(userPermissionDetailsDtoList)) {
-            List<UserPermissionDetails> addList = userPermissionDetailsDtoList.stream().map(dto ->{
+            List<UserPermissionDetails> addList = userPermissionDetailsDtoList.stream().map(dto -> {
                 UserPermissionDetails userPermissionDetails = new UserPermissionDetails();
                 BeanUtils.copyProperties(dto, userPermissionDetails);
                 return userPermissionDetails;

@@ -17,6 +17,14 @@ public class UserGroupDetails extends BaseEntity {
      **/
     private Integer userId;
 
+    public UserGroupDetails() {
+    }
+
+    public UserGroupDetails(Integer userGroupId, Integer userId) {
+        this.userGroupId = userGroupId;
+        this.userId = userId;
+    }
+
     public Integer getUserGroupId() {
         return userGroupId;
     }

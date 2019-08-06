@@ -26,6 +26,8 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -198,5 +200,24 @@ public class PermissionService {
             responseList = permissionMapper.selectByExample(permissionCri);
         }
         return responseList;
+    }
+
+    /**
+     * 通过id 查询，统计不存在的数量
+     * @param permissionIds
+     * @return
+     */
+    public Long selectPermissionNoExistCountByIds(Set<Integer> permissionIds) {
+        Long count = null;
+        if (!CollectionUtils.isEmpty(permissionIds)){
+            count = permissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(id -> {
+                        return permissionMapper.selectByPrimaryKey(id);
+                    })
+                    .filter(permission -> permission == null)
+                    .count();
+        }
+        return count;
     }
 }
