@@ -17,6 +17,14 @@ public class UserGroup extends BaseEntity {
      **/
     private String groupName;
 
+    public UserGroup() {
+    }
+
+    public UserGroup(String groupCode, String groupName) {
+        this.groupCode = groupCode;
+        this.groupName = groupName;
+    }
+
     public String getGroupCode() {
         return groupCode;
     }

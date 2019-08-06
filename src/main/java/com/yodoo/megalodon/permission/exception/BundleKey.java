@@ -43,4 +43,58 @@ public interface BundleKey {
     String PERMISSION_NOT_EXIST = PERMISSION_PREFIX + "PERMISSION.NOT.EXIST";
     String PERMISSION_NOT_EXIST_MSG = "权限不存在";
 
+    /**
+     * 权限组不存在
+     **/
+    String PERMISSION_GROUP_NOT_EXIST = PERMISSION_PREFIX + "PERMISSION.GROUP.NOT.EXIST";
+    String PERMISSION_GROUP_NOT_EXIST_MSG = "权限组不存在";
+
+    /**
+     * 权限组已存在 PermissionGroup
+     */
+    String PERMISSION_GROUP_ALREADY_EXIST = PERMISSION_PREFIX + "PERMISSION.GROUP.ALREADY.EXIST";
+    String PERMISSION_GROUP_ALREADY_EXIST_MSG = "权限组已存在";
+
+    /**
+     * 数据有在使用
+     */
+    String THE_DATA_IS_STILL_IN_USE = PERMISSION_PREFIX + "THE.DATA.IS.STILL.IN.USE";
+    String THE_DATA_IS_STILL_IN_USE_MEG = "数据有在使用";
+
+    /**
+     *  userGroup 用户组不存在
+     **/
+    String USER_GROUP_NOT_EXIST = PERMISSION_PREFIX + "USER.GROUP.NOT.EXIST";
+    String USER_GROUP_NOT_EXIST_MSG = "用户组不存在";
+
+    /**
+     *  userGroup 用户组已存在
+     **/
+    String USER_GROUP_ALREADY_EXIST = PERMISSION_PREFIX + "USER.GROUP.ALREADY.EXIST";
+    String USER_GROUP_ALREADY_EXIST_MSG = "用户组已存在";
+
+    /**
+     *  User 用户已存在
+     **/
+    String USER_ALREADY_EXIST = PERMISSION_PREFIX + "USER.ALREADY.EXIST";
+    String USER_ALREADY_EXIST_MSG = "用户已存在";
+
+    /**
+     *  User 用户不存在
+     **/
+    String USER_NOT_EXIST = PERMISSION_PREFIX + "USER.NOT.EXIST";
+    String USER_NOT_EXIST_MSG = "用户不存在";
+
+    /**
+     *  邮箱格式错误 Email format error
+     **/
+    String EMAIL_FORMAT_ERROR = PERMISSION_PREFIX + "EMAIL.FORMAT.ERROR";
+    String EMAIL_FORMAT_ERROR_MSG = "邮箱格式错误";
+
+    /**
+     *  电话格式错误 phone format error
+     **/
+    String PHONE_FORMAT_ERROR = PERMISSION_PREFIX + "PHONE.FORMAT.ERROR";
+    String PHONE_FORMAT_ERROR_MSG = "电话格式错误";
+
 }

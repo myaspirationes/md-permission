@@ -17,6 +17,14 @@ public class UserPermissionDetails extends BaseEntity {
      **/
     private Integer permissionId;
 
+    public UserPermissionDetails() {
+    }
+
+    public UserPermissionDetails(Integer userId, Integer permissionId) {
+        this.userId = userId;
+        this.permissionId = permissionId;
+    }
+
     public Integer getUserId() {
         return userId;
     }
