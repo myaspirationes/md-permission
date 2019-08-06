@@ -4,7 +4,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.contract.ProvisioningConstants;
+import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
@@ -107,18 +107,7 @@ public class UserService {
             criteria.andEqualTo("phone",userDto.getPhone());
         }
         Page<?> pages = PageHelper.startPage(userDto.getPageNum(), userDto.getPageSize());
-        List<User> userList = userMapper.selectByExample(example);
-
-        List<UserDto> collect = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(userList)) {
-            collect = userList.stream()
-                    .filter(Objects::nonNull)
-                    .map(user -> {
-                        UserDto userDtoResponse = new UserDto();
-                        BeanUtils.copyProperties(user, userDtoResponse);
-                        return userDtoResponse;
-                    }).filter(Objects::nonNull).collect(Collectors.toList());
-        }
+        List<UserDto> collect = getUserDtoByExample(example);
         return new PageInfoDto<UserDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), collect);
     }
 
@@ -134,7 +123,7 @@ public class UserService {
         User user = new User();
         BeanUtils.copyProperties(userDto, user);
         user.setStatus(UserStatusEnum.USE.getCode());
-        user.setPassword(Md5Util.md5Encode(ProvisioningConstants.DEFAULT_PASSWORD));
+        user.setPassword(Md5Util.md5Encode(PermissionConstants.DEFAULT_PASSWORD));
         Integer insertUserResponseCount = userMapper.insertSelective(user);
 
         // 如果用户有所属用户组，更新用户组详情
@@ -184,7 +173,7 @@ public class UserService {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
         User user = checkUserExistById(id);
-        user.setPassword(Md5Util.md5Encode(ProvisioningConstants.DEFAULT_PASSWORD));
+        user.setPassword(Md5Util.md5Encode(PermissionConstants.DEFAULT_PASSWORD));
         return userMapper.updateByPrimaryKeySelective(user);
     }
 
@@ -209,6 +198,40 @@ public class UserService {
      */
     public User selectByPrimaryKey(Integer id) {
         return userMapper.selectByPrimaryKey(id);
+    }
+
+    /**
+     * 查询除ids 以外的用户
+     * @param userIdsListSet
+     * @return
+     */
+    public List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
+        Example example = new Example(User.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andNotIn("id",userIdsListSet);
+       return getUserDtoByExample(example);
+    }
+
+    /**
+     * 条件查询返回列表
+     * @param example
+     * @return
+     */
+    private List<UserDto> getUserDtoByExample(Example example) {
+        List<UserDto> userDtoList = new ArrayList<>();
+        List<User> users = userMapper.selectByExample(example);
+        if (!CollectionUtils.isEmpty(users)){
+            userDtoList = users.stream()
+                    .filter(Objects::nonNull)
+                    .map(user -> {
+                        UserDto userDto = new UserDto();
+                        BeanUtils.copyProperties(user, userDto);
+                        return userDto;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+        return userDtoList;
     }
 
     /**
@@ -335,12 +358,12 @@ public class UserService {
         }
 
         // 邮件是否正确
-        if (!Pattern.compile(ProvisioningConstants.EMAIL_SERVER_MAILBOX_REGULAR_EXPRESSION).matcher(userDto.getEmail()).matches()){
+        if (!Pattern.compile(PermissionConstants.EMAIL_SERVER_MAILBOX_REGULAR_EXPRESSION).matcher(userDto.getEmail()).matches()){
             throw new PermissionException(BundleKey.EMAIL_FORMAT_ERROR, BundleKey.EMAIL_FORMAT_ERROR_MSG);
         }
 
         // 电话号码是否正确
-        if (userDto.getPhone().length() != ProvisioningConstants.PHONE_LENGTH){
+        if (userDto.getPhone().length() != PermissionConstants.PHONE_LENGTH){
             throw new PermissionException(BundleKey.PHONE_FORMAT_ERROR, BundleKey.PHONE_FORMAT_ERROR_MSG);
         }
 
