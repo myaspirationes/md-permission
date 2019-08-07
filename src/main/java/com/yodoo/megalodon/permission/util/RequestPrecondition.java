@@ -5,7 +5,10 @@ import com.ctrip.framework.apollo.core.utils.StringUtils;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 
-
+/**
+ * @Date 2019/7/26 13:17
+ * @author by houzhen
+ */
 public class RequestPrecondition {
 
     public static void checkArgumentsNotEmpty(String... args) {

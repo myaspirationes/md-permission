@@ -3,7 +3,9 @@ package com.yodoo.megalodon.permission.entity;
 import com.yodoo.megalodon.permission.common.BaseEntity;
 
 /**
- * 目标集团表
+ * @Description ：目标集团表
+ * @Author ：jinjun_luo
+ * @Date ： 2019/8/5 0005
  */
 public class UserPermissionTargetGroupDetails extends BaseEntity {
 

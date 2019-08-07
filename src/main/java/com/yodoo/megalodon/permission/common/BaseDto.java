@@ -2,7 +2,7 @@ package com.yodoo.megalodon.permission.common;
 
 /**
  * @Date 2019/7/26 13:17
- * @Created by houzhen
+ * @author by houzhen
  */
 public class BaseDto {
 

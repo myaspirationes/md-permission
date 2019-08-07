@@ -3,7 +3,8 @@ package com.yodoo.megalodon.permission.util;
 import java.security.MessageDigest;
 
 /**
- * Created by dt
+ * @Date 2019/6/10 20:03
+ * @author  by houzhen
  */
 public class Md5Util {
 

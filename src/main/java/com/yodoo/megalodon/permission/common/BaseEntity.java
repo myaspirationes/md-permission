@@ -10,7 +10,7 @@ import java.util.Date;
 
 /**
  * @Date 2019/6/10 20:03
- * @Created by houzhen
+ * @author  by houzhen
  */
 public class BaseEntity {
     /**
