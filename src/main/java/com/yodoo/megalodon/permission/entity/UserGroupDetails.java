@@ -18,6 +18,7 @@ public class UserGroupDetails extends BaseEntity {
     private Integer userId;
 
     public UserGroupDetails() {
+
     }
 
     public UserGroupDetails(Integer userGroupId, Integer userId) {

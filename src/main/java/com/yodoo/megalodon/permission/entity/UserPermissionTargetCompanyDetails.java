@@ -17,6 +17,14 @@ public class UserPermissionTargetCompanyDetails extends BaseEntity {
      **/
     private Integer companyId;
 
+    public UserPermissionTargetCompanyDetails() {
+    }
+
+    public UserPermissionTargetCompanyDetails(Integer userPermissionId, Integer companyId) {
+        this.userPermissionId = userPermissionId;
+        this.companyId = companyId;
+    }
+
     public Integer getUserPermissionId() {
         return userPermissionId;
     }

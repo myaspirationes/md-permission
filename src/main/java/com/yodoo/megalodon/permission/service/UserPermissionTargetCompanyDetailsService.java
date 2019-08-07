@@ -2,6 +2,7 @@ package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.CompanyDto;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetCompanyDetailsDto;
 import com.yodoo.megalodon.permission.entity.Company;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetCompanyDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
@@ -80,10 +81,11 @@ public class UserPermissionTargetCompanyDetailsService {
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        // 通过用户id查询用户权限表，获取用户权限表ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
         // 公司 ids
         Set<Integer> companyIdsListSet = new HashSet<>();
+
+        // 通过用户id查询用户权限表，获取用户权限表ids
+        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionIds)){
             List<List<Integer>> companyIdsList = userPermissionIds.stream()
                     .filter(Objects::nonNull)
@@ -104,6 +106,36 @@ public class UserPermissionTargetCompanyDetailsService {
     }
 
     /**
+     * 更新用户管理目标公司数据
+     * @param userPermissionTargetCompanyDetailsDtoList
+     * @param userId
+     */
+    public void updateUserPermissionTargetCompany(List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDtoList, Integer userId) {
+        // 参数判断
+        if (userId == null) {
+            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+        }
+        // 先通过用户 id 查询用户权限表，获取用户权限表 ids
+        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
+        // 通过用户权限 ids 删除 用户管理目标公司 数据
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            Example example = new Example(UserPermissionTargetCompanyDetails.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andIn("userPermissionId",userPermissionIds);
+            userPermissionTargetCompanyDetailsMapper.deleteByExample(example);
+        }
+        // 增加修改后的权限
+        if (!CollectionUtils.isEmpty(userPermissionTargetCompanyDetailsDtoList)) {
+            userPermissionTargetCompanyDetailsDtoList.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionTargetCompanyDetailsDto ->{
+                        return userPermissionTargetCompanyDetailsMapper.insertSelective(new UserPermissionTargetCompanyDetails(
+                                userPermissionTargetCompanyDetailsDto.getUserPermissionId(), userPermissionTargetCompanyDetailsDto.getCompanyId()));
+                    }).count();
+        }
+    }
+
+    /**
      * 查询除ids 以外的公司
      * @param companyIdsListSet
      * @return
@@ -111,20 +143,22 @@ public class UserPermissionTargetCompanyDetailsService {
     private List<CompanyDto> selectCompanyNotInIds(Set<Integer> companyIdsListSet) {
         List<CompanyDto> companyDtoList = new ArrayList<>();
 
-        Example example = new Example(Company.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andNotIn("id",companyIdsListSet);
-        List<Company> companies = companyMapper.selectByExample(example);
-        if (!CollectionUtils.isEmpty(companies)){
-            companyDtoList = companies.stream()
-                    .filter(Objects::nonNull)
-                    .map(company -> {
-                        CompanyDto companyDto = new CompanyDto();
-                        BeanUtils.copyProperties(companies, companyDto);
-                        return companyDto;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(companyIdsListSet)){
+            Example example = new Example(Company.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andNotIn("id",companyIdsListSet);
+            List<Company> companies = companyMapper.selectByExample(example);
+            if (!CollectionUtils.isEmpty(companies)){
+                companyDtoList = companies.stream()
+                        .filter(Objects::nonNull)
+                        .map(company -> {
+                            CompanyDto companyDto = new CompanyDto();
+                            BeanUtils.copyProperties(companies, companyDto);
+                            return companyDto;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
         }
         return companyDtoList;
     }

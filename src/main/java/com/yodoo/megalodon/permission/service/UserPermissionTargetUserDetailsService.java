@@ -2,6 +2,7 @@ package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.UserDto;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetUserDetailsDto;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetUserDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
@@ -80,10 +81,11 @@ public class UserPermissionTargetUserDetailsService {
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
+        // 用户 ids
+        Set<Integer> userIdsListSet = new HashSet<>();
+
         // 通过用户id查询用户权限表，获取用户权限表ids
         List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        // 公司 ids
-        Set<Integer> userIdsListSet = new HashSet<>();
         if (!CollectionUtils.isEmpty(userPermissionIds)){
             List<List<Integer>> userIdsList = userPermissionIds.stream()
                     .filter(Objects::nonNull)
@@ -101,6 +103,36 @@ public class UserPermissionTargetUserDetailsService {
             }
         }
         return userService.selectUserNotInIds(userIdsListSet);
+    }
+
+    /**
+     * 更新用户管理目标用户数据
+     * @param userPermissionTargetUserDetailsDtoList
+     * @param userId
+     */
+    public void updateUserPermissionTargetUser(List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDtoList, Integer userId) {
+        // 参数判断
+        if (userId == null) {
+            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+        }
+        // 先通过用户 id 查询用户权限表，获取用户权限表 ids
+        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
+        // 通过用户权限 ids 删除 用户管理目标用户 数据
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            Example example = new Example(UserPermissionTargetUserDetails.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andIn("userPermissionId",userPermissionIds);
+            userPermissionTargetUserDetailsMapper.deleteByExample(example);
+        }
+        // 增加修改后的权限
+        if (!CollectionUtils.isEmpty(userPermissionTargetUserDetailsDtoList)) {
+            userPermissionTargetUserDetailsDtoList.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionTargetUserDetailsDto ->{
+                        return userPermissionTargetUserDetailsMapper.insertSelective(new UserPermissionTargetUserDetails(
+                                userPermissionTargetUserDetailsDto.getUserPermissionId(), userPermissionTargetUserDetailsDto.getUserId()));
+                    }).count();
+        }
     }
 
     /**

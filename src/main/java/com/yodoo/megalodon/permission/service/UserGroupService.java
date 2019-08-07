@@ -41,6 +41,15 @@ public class UserGroupService {
     @Autowired
     private UserGroupPermissionDetailsService userGroupPermissionDetailsService;
 
+    @Autowired
+    private UserPermissionDetailsService userPermissionDetailsService;
+
+    @Autowired
+    private UserPermissionTargetUserGroupDetailsService userPermissionTargetUserGroupDetailsService;
+
+    @Autowired
+    private UserGroupDetailsService userGroupDetailsService;
+
     /**
      * 条件分页查询
      * @param userGroupDto
@@ -67,6 +76,11 @@ public class UserGroupService {
                     .map(userGroup -> {
                         UserGroupDto userGroupDtoResponse = new UserGroupDto();
                         BeanUtils.copyProperties(userGroup, userGroupDtoResponse);
+                        // 查询当前用户组下有多少个用户
+                        Integer userCount = userGroupDetailsService.selectCountByUserGroupId(userGroup.getId());
+                        if (userCount != null && userCount > 0){
+                            userGroupDtoResponse.setUserTotal(userCount);
+                        }
                         return userGroupDtoResponse;
                     }).filter(Objects::nonNull).collect(Collectors.toList());
         }
@@ -115,7 +129,11 @@ public class UserGroupService {
 
         // 如果权限组id 不为空， 更新 更新用户组权限组关系数据
         if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds()) && insertCount != null && insertCount > 0){
-            updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
+            userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
+        }
+        // 用户管理用户组权限表
+        if (!CollectionUtils.isEmpty(userGroupDto.getUserPermissionIds()) && insertCount != null && insertCount > 0){
+            userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroup.getId(), userGroupDto.getUserPermissionIds());
         }
 
         return insertCount;
@@ -137,19 +155,14 @@ public class UserGroupService {
 
         // 权限组不为空，更新用户权限组详情
         if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds()) && updateCount != null && updateCount > 0){
-            updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
+            userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
+        }
+
+        // 用户管理用户组权限表
+        if (!CollectionUtils.isEmpty(userGroupDto.getUserPermissionIds()) && updateCount != null && updateCount > 0){
+            userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroup.getId(), userGroupDto.getUserPermissionIds());
         }
         return updateCount;
-    }
-
-    /**
-     * 更新用户组权限组关系数据
-     * @param userGroupId
-     * @param permissionGroupIds
-     */
-    private void updateUserGroupPermissionDetails(Integer userGroupId, Set<Integer> permissionGroupIds) {
-        userGroupPermissionDetailsService.deleteUserGroupPermissionDetailsByUserGroupId(userGroupId);
-        userGroupPermissionDetailsService.insertUserGroupPermissionDetails(userGroupId, permissionGroupIds);
     }
 
     /**
@@ -178,10 +191,8 @@ public class UserGroupService {
             throw new PermissionException(BundleKey.USER_GROUP_ALREADY_EXIST, BundleKey.USER_GROUP_ALREADY_EXIST_MSG);
         }
 
-        // 如果权限组不为空,查询权限组不存在，不操作
-        if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds())){
-            checkPermissionGroupIds(userGroupDto.getPermissionGroupIds());
-        }
+        // 如果权限组和用户权限不为空,查询权限组不存在，不操作
+        checkPermissionGroupIdsAndUserPermissionIds(userGroupDto);
         return userGroup;
     }
 
@@ -203,20 +214,28 @@ public class UserGroupService {
             throw new PermissionException(BundleKey.USER_GROUP_ALREADY_EXIST, BundleKey.USER_GROUP_ALREADY_EXIST_MSG);
         }
 
-        // 如果权限组不为空,查询权限组不存在，不操作
-        if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds())){
-            checkPermissionGroupIds(userGroupDto.getPermissionGroupIds());
-        }
+        // 如果权限组和用户权限不为空,查询权限组不存在，不操作
+        checkPermissionGroupIdsAndUserPermissionIds(userGroupDto);
     }
 
     /**
      * 如果权限组不为空,查询权限组不存在，不操作
-     * @param permissionGroupIds
+     * @param userGroupDto
      */
-    private void checkPermissionGroupIds(Set<Integer> permissionGroupIds) {
-        Long permissionGroupNoExistCount = permissionGroupService.selectPermissionGroupNoExistCountByIds(permissionGroupIds);
-        if (permissionGroupNoExistCount != null && permissionGroupNoExistCount > 0){
-            throw new PermissionException(BundleKey.PERMISSION_GROUP_NOT_EXIST, BundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
+    private void checkPermissionGroupIdsAndUserPermissionIds(UserGroupDto userGroupDto) {
+        // 权限组、通过id 查询，统计不存在的数量
+        if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds())){
+            Long permissionGroupNoExistCount = permissionGroupService.selectPermissionGroupNoExistCountByIds(userGroupDto.getPermissionGroupIds());
+            if (permissionGroupNoExistCount != null && permissionGroupNoExistCount > 0){
+                throw new PermissionException(BundleKey.PERMISSION_GROUP_NOT_EXIST, BundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
+            }
+        }
+        // 用户权限、通过id 查询，统计不存在的数量
+        if (!CollectionUtils.isEmpty(userGroupDto.getUserPermissionIds())){
+            Long userPermissionNoExistCount = userPermissionDetailsService.selectUserPermissionNoExistCountByIds(userGroupDto.getUserPermissionIds());
+            if (userPermissionNoExistCount != null && userPermissionNoExistCount > 0){
+                throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
+            }
         }
     }
 }

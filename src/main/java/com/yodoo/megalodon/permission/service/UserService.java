@@ -206,10 +206,13 @@ public class UserService {
      * @return
      */
     public List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
-        Example example = new Example(User.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andNotIn("id",userIdsListSet);
-       return getUserDtoByExample(example);
+        if (!CollectionUtils.isEmpty(userIdsListSet)){
+            Example example = new Example(User.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andNotIn("id",userIdsListSet);
+            return getUserDtoByExample(example);
+        }
+        return null;
     }
 
     /**

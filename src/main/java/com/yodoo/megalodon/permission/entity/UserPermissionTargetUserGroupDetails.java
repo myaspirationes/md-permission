@@ -17,6 +17,14 @@ public class UserPermissionTargetUserGroupDetails extends BaseEntity {
      */
     private Integer userPermissionId;
 
+    public UserPermissionTargetUserGroupDetails() {
+    }
+
+    public UserPermissionTargetUserGroupDetails(Integer userGroupId, Integer userPermissionId) {
+        this.userGroupId = userGroupId;
+        this.userPermissionId = userPermissionId;
+    }
+
     public Integer getUserGroupId() {
         return userGroupId;
     }
