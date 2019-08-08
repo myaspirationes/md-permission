@@ -106,9 +106,11 @@ public class UserPermissionTargetGroupDetailsService {
                     .collect(Collectors.toList());
             // 整合公司ids
             if (!CollectionUtils.isEmpty(groupsIdsList)){
-                for (List<Integer> groupsIds : groupsIdsList) {
-                    groupsIdsListSet.addAll(groupsIds);
-                }
+                groupsIdsList.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(groupsIds -> {
+                            groupsIdsListSet.addAll(groupsIds);
+                        });
             }
         }
         return selectGroupsNotInIds(groupsIdsListSet);

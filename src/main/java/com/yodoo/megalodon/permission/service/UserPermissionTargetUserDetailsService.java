@@ -97,9 +97,11 @@ public class UserPermissionTargetUserDetailsService {
                     .collect(Collectors.toList());
             // 整合用户 ids
             if (!CollectionUtils.isEmpty(userIdsList)){
-                for (List<Integer> userIds : userIdsList) {
-                    userIdsListSet.addAll(userIds);
-                }
+                userIdsList.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(userIds -> {
+                            userIdsListSet.addAll(userIds);
+                        });
             }
         }
         return userService.selectUserNotInIds(userIdsListSet);

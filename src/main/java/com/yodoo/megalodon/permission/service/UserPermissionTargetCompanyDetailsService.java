@@ -97,9 +97,11 @@ public class UserPermissionTargetCompanyDetailsService {
                     .collect(Collectors.toList());
             // 整合公司ids
             if (!CollectionUtils.isEmpty(companyIdsList)){
-                for (List<Integer> companyIds : companyIdsList) {
-                    companyIdsListSet.addAll(companyIds);
-                }
+                companyIdsList.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(companyIds -> {
+                            companyIdsListSet.addAll(companyIds);
+                        });
             }
         }
         return selectCompanyNotInIds(companyIdsListSet);
