@@ -5,6 +5,7 @@ import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
+import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroup;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -12,6 +13,7 @@ import com.yodoo.megalodon.permission.mapper.UserGroupMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -50,11 +52,18 @@ public class UserGroupService {
     @Autowired
     private UserGroupDetailsService userGroupDetailsService;
 
+    @Autowired
+    private SearchConditionService searchConditionService;
+
+    @Autowired
+    private UserGroupConditionService userGroupConditionService;
+
     /**
      * 条件分页查询
      * @param userGroupDto
      * @return
      */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
     public PageInfoDto<UserGroupDto> queryUserGroupList(UserGroupDto userGroupDto) {
         Example example = new Example(UserGroup.class);
         Example.Criteria criteria = example.createCriteria();
@@ -119,6 +128,7 @@ public class UserGroupService {
      * 添加用户组
      * @param userGroupDto
      */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
     public Integer addUserGroup(UserGroupDto userGroupDto) {
         // 参数校验
         addUserGroupParameterCheck(userGroupDto);
@@ -128,14 +138,17 @@ public class UserGroupService {
         Integer insertCount = userGroupMapper.insertSelective(userGroup);
 
         // 如果权限组id 不为空， 更新 更新用户组权限组关系数据
-        if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds()) && insertCount != null && insertCount > 0){
+        if (insertCount != null && insertCount > 0){
             userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
         }
         // 用户管理用户组权限表
-        if (!CollectionUtils.isEmpty(userGroupDto.getUserPermissionIds()) && insertCount != null && insertCount > 0){
+        if (insertCount != null && insertCount > 0){
             userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroup.getId(), userGroupDto.getUserPermissionIds());
         }
-
+        // 用户组条件不为空
+        if (insertCount != null && insertCount > 0){
+            userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getConditionDtoList());
+        }
         return insertCount;
     }
 
@@ -144,6 +157,7 @@ public class UserGroupService {
      * @param userGroupDto
      * @return
      */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
     public Integer editUserGroup(UserGroupDto userGroupDto) {
         // 参数校验
         UserGroup userGroup = editUserGroupParameterCheck(userGroupDto);
@@ -154,13 +168,18 @@ public class UserGroupService {
         Integer updateCount = userGroupMapper.updateByPrimaryKeySelective(userGroup);
 
         // 权限组不为空，更新用户权限组详情
-        if (!CollectionUtils.isEmpty(userGroupDto.getPermissionGroupIds()) && updateCount != null && updateCount > 0){
+        if (updateCount != null && updateCount > 0){
             userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
         }
 
         // 用户管理用户组权限表
-        if (!CollectionUtils.isEmpty(userGroupDto.getUserPermissionIds()) && updateCount != null && updateCount > 0){
+        if (updateCount != null && updateCount > 0){
             userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroup.getId(), userGroupDto.getUserPermissionIds());
+        }
+
+        // 用户组条件不为空
+        if (updateCount != null && updateCount > 0){
+            userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getConditionDtoList());
         }
         return updateCount;
     }
@@ -236,6 +255,21 @@ public class UserGroupService {
             if (userPermissionNoExistCount != null && userPermissionNoExistCount > 0){
                 throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
             }
+        }
+        // 条件是否为空
+        if (!CollectionUtils.isEmpty(userGroupDto.getConditionDtoList())){
+            userGroupDto.getConditionDtoList().stream()
+                    .filter(Objects::nonNull)
+                    .forEach(conditionDto -> {
+                        if (conditionDto.getSearchConditionId() == null || conditionDto.getSearchConditionId() < 0
+                                || StringUtils.isBlank(conditionDto.getMatchValue()) || StringUtils.isBlank(conditionDto.getOperator())){
+                            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+                        }
+                        SearchCondition searchCondition = searchConditionService.selectByPrimaryKey(conditionDto.getSearchConditionId());
+                        if (searchCondition == null){
+                            throw new PermissionException(BundleKey.SEARCH_CONDITION_NOT_EXIST, BundleKey.SEARCH_CONDITION_NOT_EXIST_MSG);
+                        }
+                    });
         }
     }
 }

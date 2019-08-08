@@ -1,17 +1,14 @@
 package com.yodoo.megalodon.permission.api;
 
 import com.yodoo.megalodon.permission.common.PageInfoDto;
-import com.yodoo.megalodon.permission.dto.ActionPermissionInUserListDto;
-import com.yodoo.megalodon.permission.dto.CompanyDto;
-import com.yodoo.megalodon.permission.dto.GroupsDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
+import com.yodoo.megalodon.permission.dto.UserGroupDto;
+import com.yodoo.megalodon.permission.service.UserGroupService;
 import com.yodoo.megalodon.permission.service.UserPermissionDetailsService;
 import com.yodoo.megalodon.permission.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @Description ：用户管理
@@ -23,6 +20,9 @@ public class UserManagerApi {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserGroupService userGroupService;
 
     @Autowired
     private UserPermissionDetailsService userPermissionDetailsService;
@@ -81,6 +81,42 @@ public class UserManagerApi {
     @PreAuthorize("hasAnyAuthority('user_manage')")
     public Integer updateUserStatus(Integer userId, Integer status){
         return userService.updateUserStatus(userId, status);
+    }
+
+    /**
+     * 条件分页查询用户组
+     * @param userGroupDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public PageInfoDto<UserGroupDto> queryUserGroupList(UserGroupDto userGroupDto){
+        return userGroupService.queryUserGroupList(userGroupDto);
+    }
+
+    /**
+     * 添加用户组:
+     * 1、用户组权限表
+     * 2、用户管理用户组权限表
+     * 3、用户组条件表
+     *
+     * @param userGroupDto
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public Integer addUserGroup(UserGroupDto userGroupDto){
+        return userGroupService.addUserGroup(userGroupDto);
+    }
+
+    /**
+     * 更新用户组：
+     * 1、用户组权限表
+     * 2、用户管理用户组权限表
+     * 3、用户组条件表
+     * @param userGroupDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public Integer editUserGroup(UserGroupDto userGroupDto) {
+        return userGroupService.editUserGroup(userGroupDto);
     }
 
 }

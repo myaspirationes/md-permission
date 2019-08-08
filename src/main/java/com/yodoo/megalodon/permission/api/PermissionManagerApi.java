@@ -2,10 +2,7 @@ package com.yodoo.megalodon.permission.api;
 
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.dto.*;
-import com.yodoo.megalodon.permission.service.PermissionGroupService;
-import com.yodoo.megalodon.permission.service.PermissionService;
-import com.yodoo.megalodon.permission.service.UserPermissionDetailsService;
-import com.yodoo.megalodon.permission.service.UserService;
+import com.yodoo.megalodon.permission.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
@@ -31,6 +28,9 @@ public class PermissionManagerApi {
 
     @Autowired
     private PermissionGroupService permissionGroupService;
+
+    @Autowired
+    private SearchConditionService searchConditionService;
 
     /**
      * 在用户列表中点击权限,获取目标集团、目标公司、目标用户的list
@@ -189,5 +189,45 @@ public class PermissionManagerApi {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public PermissionGroupDto getPermissionGroupDetails(Integer id) {
         return permissionGroupService.getPermissionGroupDetails(id);
+    }
+
+    /**
+     * 条件分页查询 条件查询表
+     * @param searchConditionDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public PageInfoDto<SearchConditionDto> queryUserGroupList(SearchConditionDto searchConditionDto){
+        return searchConditionService.queryUserGroupList(searchConditionDto);
+    }
+
+    /**
+     * 添加 条件查询表
+     * @param searchConditionDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public Integer addSearchCondition(SearchConditionDto searchConditionDto){
+        return searchConditionService.addSearchCondition(searchConditionDto);
+    }
+
+    /**
+     * 更新条件查询表
+     * @param searchConditionDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public Integer editSearchCondition(SearchConditionDto searchConditionDto){
+        return searchConditionService.editSearchCondition(searchConditionDto);
+    }
+
+    /**
+     * 删除条件查询表
+     * @param id
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public Integer deleteSearchCondition(Integer id){
+        return searchConditionService.deleteSearchCondition(id);
     }
 }

@@ -19,6 +19,14 @@ public class SearchCondition extends BaseEntity {
      **/
     private String conditionName;
 
+    public SearchCondition() {
+    }
+
+    public SearchCondition(String conditionCode, String conditionName) {
+        this.conditionCode = conditionCode;
+        this.conditionName = conditionName;
+    }
+
     public String getConditionCode() {
         return conditionCode;
     }

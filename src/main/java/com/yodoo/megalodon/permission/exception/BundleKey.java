@@ -118,4 +118,22 @@ public interface BundleKey {
      **/
     String MENU_NOT_EXIST = PERMISSION_PREFIX + "MENU.NOT.EXIST";
     String MENU_NOT_EXIST_MSG = "菜单不存在";
+
+    /**
+     *  查询条件已存在
+     **/
+    String SEARCH_CONDITION_ALREADY_EXIST = PERMISSION_PREFIX + "MENU.ALREADY.EXIST";
+    String SEARCH_CONDITION_ALREADY_EXIST_MSG = "查询条件已存在";
+
+    /**
+     *  查询条件不存在
+     **/
+    String SEARCH_CONDITION_NOT_EXIST = PERMISSION_PREFIX + "MENU.NOT.EXIST";
+    String SEARCH_CONDITION_NOT_EXIST_MSG = "查询条件不存在";
+
+    /**
+     *  查询条件还在使用，不能删除
+     **/
+    String SEARCH_CONDITION_USE = PERMISSION_PREFIX + "MENU.USE";
+    String SEARCH_CONDITION_USE_MSG = "查询条件还在使用，不能删除";
 }
