@@ -82,7 +82,7 @@ public class PermissionService {
      * @Date 15:55 2019/8/5
     **/
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public void addPermission(PermissionDto permissionDto) {
+    public Integer addPermission(PermissionDto permissionDto) {
         logger.info("PermissionService.addPermission permissionDto:{}", JsonUtils.obj2json(permissionDto));
         // 检验参数
         RequestPrecondition.checkArgumentsNotEmpty(permissionDto.getPermissionCode(), permissionDto.getPermissionName());
@@ -93,7 +93,7 @@ public class PermissionService {
         }
         permission = new Permission();
         BeanUtils.copyProperties(permissionDto, permission);
-        permissionMapper.insertSelective(permission);
+        return permissionMapper.insertSelective(permission);
     }
 
     /**
@@ -102,7 +102,7 @@ public class PermissionService {
      * @Date 17:08 2019/8/5
     **/
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public void updatePermission(PermissionDto permissionDto) {
+    public Integer updatePermission(PermissionDto permissionDto) {
         logger.info("PermissionService.updatePermission permissionDto:{}", JsonUtils.obj2json(permissionDto));
         // 检验参数
         RequestPrecondition.checkArgumentsNotEmpty(permissionDto.getPermissionCode(), permissionDto.getPermissionName());
@@ -111,7 +111,7 @@ public class PermissionService {
             throw new PermissionException(BundleKey.PERMISSION_NOT_EXIST, BundleKey.PERMISSION_NOT_EXIST_MSG);
         }
         permission.setPermissionName(permission.getPermissionName());
-        permissionMapper.updateByPrimaryKey(permission);
+        return permissionMapper.updateByPrimaryKey(permission);
     }
 
     /**
