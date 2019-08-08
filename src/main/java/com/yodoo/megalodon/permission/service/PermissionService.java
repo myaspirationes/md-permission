@@ -181,7 +181,7 @@ public class PermissionService {
         return permission;
     }
 
-    private List<Permission> selectPermissionByUserId(Integer userId) {
+    public List<Permission> selectPermissionByUserId(Integer userId) {
         List<Permission> responseList = new ArrayList<>();
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
