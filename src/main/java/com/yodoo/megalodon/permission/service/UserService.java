@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 /**
  * @Date 2019/7/26 11:49
- * @Created by houzhen
+ * @author by houzhen
  */
 @Service
 @Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
@@ -206,10 +206,13 @@ public class UserService {
      * @return
      */
     public List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
-        Example example = new Example(User.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andNotIn("id",userIdsListSet);
-       return getUserDtoByExample(example);
+        if (!CollectionUtils.isEmpty(userIdsListSet)){
+            Example example = new Example(User.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andNotIn("id",userIdsListSet);
+            return getUserDtoByExample(example);
+        }
+        return null;
     }
 
     /**

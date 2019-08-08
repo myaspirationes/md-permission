@@ -55,8 +55,9 @@ public class UserPermissionDetailsService {
      * @return
      */
     public List<Integer> getUserPermissionIdsByUserId(Integer userId){
-        List<UserPermissionDetails> userPermissionDetailsList = this.selectUserPermissionDetailsByUserId(userId);
         List<Integer> userPermissionIds = new ArrayList<>();
+
+        List<UserPermissionDetails> userPermissionDetailsList = this.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
             userPermissionIds = userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
@@ -119,5 +120,24 @@ public class UserPermissionDetailsService {
             }).collect(Collectors.toList());
             userPermissionDetailsMapper.insertList(addList);
         }
+    }
+
+    /**
+     * 通过id 查询，统计不存在的数量
+     * @param userPermissionIds
+     * @return
+     */
+    public Long selectUserPermissionNoExistCountByIds(Set<Integer> userPermissionIds) {
+        Long count = null;
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            count = userPermissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(id -> {
+                        return userPermissionDetailsMapper.selectByPrimaryKey(id);
+                    })
+                    .filter(userPermissionDetails -> userPermissionDetails == null)
+                    .count();
+        }
+        return count;
     }
 }

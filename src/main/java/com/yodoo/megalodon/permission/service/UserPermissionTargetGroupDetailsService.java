@@ -4,8 +4,6 @@ import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.GroupsDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetGroupDetailsDto;
 import com.yodoo.megalodon.permission.entity.Groups;
-import com.yodoo.megalodon.permission.entity.Permission;
-import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetGroupDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -22,8 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +39,9 @@ public class UserPermissionTargetGroupDetailsService {
     @Autowired
     private GroupsMapper groupsMapper;
 
+    @Autowired
+    private UserPermissionDetailsService userPermissionDetailsService;
+
     /**
      * 根据用户id查询目标集团
      * @Author houzhen
@@ -50,73 +50,68 @@ public class UserPermissionTargetGroupDetailsService {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public List<GroupsDto> getTargetGroupsByUserId(Integer userId) {
         logger.info("UserPermissionTargetGroupDetailsService.getTargetGroupsByUserId userId:{}", userId);
-        List<GroupsDto> responseList = new ArrayList<>();
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        List<Groups> groupsList = this.selectGroupsByUserId(userId);
-        if (!CollectionUtils.isEmpty(groupsList)) {
-            responseList = groupsList.stream().map(groups -> {
-                GroupsDto dto = new GroupsDto();
-                BeanUtils.copyProperties(groups, dto);
-                return dto;
-            }).collect(Collectors.toList());
+        List<GroupsDto> groupsDtoList = new ArrayList<>();
+        // 通过用户id 查询用户权限表，获取用户权限表id
+        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            userPermissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionId -> {
+                        // 通过用户权限id 查询用户管理目标集团，获取集团 ids
+                        List<Integer> groupIds = this.getGroupIdsByUserPermissionId(userPermissionId);
+                        if (!CollectionUtils.isEmpty(groupIds)) {
+                            // 通过集团id 查询集团表信息
+                            List<GroupsDto> collect= groupIds.stream()
+                                    .filter(Objects::nonNull)
+                                    .map(groupId -> {
+                                        return this.selectGroupById(groupId);
+                                    }).filter(Objects::nonNull).collect(Collectors.toList());
+                            if (!CollectionUtils.isEmpty(collect)){
+                                groupsDtoList.addAll(collect);
+                            }
+                        }
+                        return null;
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
         }
-        return responseList;
+        return groupsDtoList;
     }
 
     /**
      * 查询可选目标集团
      * @Author houzhen
      * @Date 9:43 2019/8/6
-    **/
+     **/
     public List<GroupsDto> getAvailableGroupsByUserId(Integer userId) {
         logger.info("UserPermissionTargetGroupDetailsService.getAvailableGroupsByUserId userId:{}", userId);
         List<GroupsDto> responseList = new ArrayList<>();
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        List<Groups> groupsList = this.selectGroupsByUserId(userId);
-        List<Groups> availableGroupsList = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(groupsList)) {
-            List<Integer> groupIdList = groupsList.stream().map(Groups::getId).collect(Collectors.toList());
-            Example example = new Example(Permission.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andNotIn("id", groupIdList);
-            example.and(criteria);
-            availableGroupsList = groupsMapper.selectByExample(example);
-        } else {
-            availableGroupsList = groupsMapper.selectAll();
-        }
-        if (!CollectionUtils.isEmpty(availableGroupsList)) {
-            responseList = availableGroupsList.stream().map(groups -> {
-                GroupsDto dto = new GroupsDto();
-                BeanUtils.copyProperties(groups, dto);
-                return dto;
-            }).collect(Collectors.toList());
-        }
-        return responseList;
-    }
+        // 公司 ids
+        Set<Integer> groupsIdsListSet = new HashSet<>();
 
-    private List<Groups> selectGroupsByUserId(Integer userId) {
-        List<Groups> responseList = new ArrayList<>();
-        if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+        // 通过用户id查询用户权限表，获取用户权限表ids
+        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            List<List<Integer>> groupsIdsList = userPermissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionId -> {
+                        // 通过用户权限表id 查询用户管理目标集团表，获取集团ids
+                        return this.getGroupIdsByUserPermissionId(userPermissionId);
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            // 整合公司ids
+            if (!CollectionUtils.isEmpty(groupsIdsList)){
+                for (List<Integer> groupsIds : groupsIdsList) {
+                    groupsIdsListSet.addAll(groupsIds);
+                }
+            }
         }
-        Example userPermissionExa = new Example(UserPermissionTargetGroupDetails.class);
-        Example.Criteria userPermissionCri = userPermissionExa.createCriteria();
-        userPermissionCri.andEqualTo("userId", userId);
-        userPermissionExa.and(userPermissionCri);
-        List<UserPermissionTargetGroupDetails> targetGroupDetailsList = userPermissionTargetGroupDetailsMapper.selectByExample(userPermissionExa);
-        if (!CollectionUtils.isEmpty(targetGroupDetailsList)) {
-            List<Integer> groupIdList = targetGroupDetailsList.stream().map(UserPermissionTargetGroupDetails::getGroupId).collect(Collectors.toList());
-            Example groupExa = new Example(Groups.class);
-            Example.Criteria permissionCri = groupExa.createCriteria();
-            permissionCri.andIn("id", groupIdList);
-            groupExa.and(permissionCri);
-            responseList = groupsMapper.selectByExample(permissionCri);
-        }
-        return responseList;
+        return selectGroupsNotInIds(groupsIdsListSet);
     }
 
     /**
@@ -130,20 +125,90 @@ public class UserPermissionTargetGroupDetailsService {
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        // 先删除旧的数据
-        Example example = new Example(UserPermissionDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userId", userId);
-        example.and(criteria);
-        userPermissionTargetGroupDetailsMapper.deleteByExample(example);
+        // 先通过用户 id 查询用户权限表，获取用户权限表 ids
+        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
+        // 通过用户权限 ids 删除 用户管理目标集团 数据
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            Example example = new Example(UserPermissionTargetGroupDetails.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andIn("userPermissionId",userPermissionIds);
+            userPermissionTargetGroupDetailsMapper.deleteByExample(example);
+        }
         // 增加修改后的权限
         if (!CollectionUtils.isEmpty(userPermissionTargetGroupDetailsDtoList)) {
-            List<UserPermissionTargetGroupDetails> addList = userPermissionTargetGroupDetailsDtoList.stream().map(dto ->{
-                UserPermissionTargetGroupDetails userPermissionTargetGroupDetails = new UserPermissionTargetGroupDetails();
-                BeanUtils.copyProperties(dto, userPermissionTargetGroupDetails);
-                return userPermissionTargetGroupDetails;
-            }).collect(Collectors.toList());
-            userPermissionTargetGroupDetailsMapper.insertList(addList);
+            userPermissionTargetGroupDetailsDtoList.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionTargetGroupDetailsDto ->{
+                        return userPermissionTargetGroupDetailsMapper.insertSelective(new UserPermissionTargetGroupDetails(
+                                userPermissionTargetGroupDetailsDto.getUserPermissionId(), userPermissionTargetGroupDetailsDto.getGroupId()));
+                    }).count();
         }
+    }
+
+    /**
+     * 查询除ids 以外的集团
+     * @param groupsIdsListSet
+     * @return
+     */
+    private List<GroupsDto> selectGroupsNotInIds(Set<Integer> groupsIdsListSet) {
+        List<GroupsDto> groupsDtoList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(groupsIdsListSet)){
+            Example example = new Example(Groups.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andNotIn("id",groupsIdsListSet);
+            List<Groups> groupsList = groupsMapper.selectByExample(example);
+            if (!CollectionUtils.isEmpty(groupsList)){
+                groupsDtoList = groupsList.stream()
+                        .filter(Objects::nonNull)
+                        .map(groups -> {
+                            GroupsDto groupsDto = new GroupsDto();
+                            BeanUtils.copyProperties(groups, groupsDto);
+                            return groupsDto;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+        }
+        return groupsDtoList;
+    }
+
+    /**
+     * 通过主键查询
+     * @param groupsId
+     * @return
+     */
+    private GroupsDto selectGroupById(Integer groupsId) {
+        Example example = new Example(Groups.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("id", groupsId);
+        Groups groups = groupsMapper.selectOneByExample(example);
+        if (groups != null){
+            GroupsDto groupsDto = new GroupsDto();
+            BeanUtils.copyProperties(groupsDto, groups);
+            return groupsDto;
+        }
+        return null;
+    }
+
+    /**
+     * 通过用户权限id 查询用户管理目标集团
+     * @param userPermissionId
+     * @return
+     */
+    private List<Integer>  getGroupIdsByUserPermissionId(Integer userPermissionId) {
+        List<Integer> groupsIds = new ArrayList<>();
+
+        Example example = new Example(UserPermissionTargetGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId", userPermissionId);
+        List<UserPermissionTargetGroupDetails> list = userPermissionTargetGroupDetailsMapper.selectByExample(example);
+        if (!CollectionUtils.isEmpty(list)){
+            groupsIds = list.stream()
+                    .filter(Objects::nonNull)
+                    .map(UserPermissionTargetGroupDetails::getGroupId)
+                    .collect(Collectors.toList());
+        }
+        return groupsIds;
     }
 }

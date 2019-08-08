@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import tk.mybatis.mapper.entity.Example;
 
 import java.util.Objects;
 import java.util.Set;
@@ -53,5 +54,17 @@ public class UserGroupDetailsService {
                     }).filter(Objects::nonNull).count();
         }
         return count;
+    }
+
+    /**
+     * 通过用户组id查询总数
+     * @param userGroupId
+     * @return
+     */
+    public Integer selectCountByUserGroupId(Integer userGroupId) {
+        Example example = new Example(UserGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userGroupId", userGroupId);
+        return userGroupDetailsMapper.selectCountByExample(example);
     }
 }

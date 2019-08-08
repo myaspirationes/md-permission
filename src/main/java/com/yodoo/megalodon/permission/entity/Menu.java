@@ -3,7 +3,9 @@ package com.yodoo.megalodon.permission.entity;
 import com.yodoo.megalodon.permission.common.BaseEntity;
 
 /**
- * 菜单表
+ * @Description ：菜单表
+ * @Author ：jinjun_luo
+ * @Date ： 2019/8/5 0005
  */
 public class Menu extends BaseEntity {
 

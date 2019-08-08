@@ -5,7 +5,9 @@ import com.yodoo.megalodon.permission.common.BaseEntity;
 import java.util.Date;
 
 /**
- * 用户表
+ * @Description ：用户表
+ * @Author ：jinjun_luo
+ * @Date ： 2019/8/5 0005
  */
 public class User extends BaseEntity {
 

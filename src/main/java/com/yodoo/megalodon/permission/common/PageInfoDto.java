@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * @Date 2019/7/11 10:56
- * @Created by houzhen
+ * @author  by houzhen
  */
 public class PageInfoDto<T> extends BaseDto {
 

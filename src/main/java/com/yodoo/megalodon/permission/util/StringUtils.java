@@ -3,6 +3,10 @@ package com.yodoo.megalodon.permission.util;
 import java.util.Collection;
 import java.util.Iterator;
 
+/**
+ * @Date 2019/7/26 13:17
+ * @author by houzhen
+ */
 public class StringUtils {
 
     public static final String EMPTY = "";

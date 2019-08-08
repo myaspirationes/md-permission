@@ -164,7 +164,7 @@ public class PermissionGroupService {
      * @param tid
      * @return
      */
-    private PermissionGroup selectByPrimaryKey(Integer tid) {
+    public PermissionGroup selectByPrimaryKey(Integer tid) {
         return permissionGroupMapper.selectByPrimaryKey(tid);
     }
 

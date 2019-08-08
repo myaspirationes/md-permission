@@ -23,9 +23,19 @@ public class UserGroupDto extends BaseDto {
     private String groupName;
 
     /**
+     * 当前组下用户总数
+     */
+    private Integer userTotal;
+
+    /**
      * 权限组 ids
      */
     private Set<Integer> permissionGroupIds;
+
+    /**
+     * 用户权限 ids
+     */
+    private Set<Integer> userPermissionIds;
 
     public String getGroupCode() {
         return groupCode;
@@ -45,12 +55,30 @@ public class UserGroupDto extends BaseDto {
         return this;
     }
 
+    public Integer getUserTotal() {
+        return userTotal;
+    }
+
+    public UserGroupDto setUserTotal(Integer userTotal) {
+        this.userTotal = userTotal;
+        return this;
+    }
+
     public Set<Integer> getPermissionGroupIds() {
         return permissionGroupIds;
     }
 
     public UserGroupDto setPermissionGroupIds(Set<Integer> permissionGroupIds) {
         this.permissionGroupIds = permissionGroupIds;
+        return this;
+    }
+
+    public Set<Integer> getUserPermissionIds() {
+        return userPermissionIds;
+    }
+
+    public UserGroupDto setUserPermissionIds(Set<Integer> userPermissionIds) {
+        this.userPermissionIds = userPermissionIds;
         return this;
     }
 }

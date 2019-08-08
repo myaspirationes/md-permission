@@ -1,5 +1,9 @@
 package com.yodoo.megalodon.permission.exception;
 
+/**
+ * @Date 2019/6/10 20:03
+ * @author  by houzhen
+ */
 public interface BundleKey {
 
     /**
@@ -38,10 +42,16 @@ public interface BundleKey {
     String PERMISSION_EXIST_MSG = "权限已存在";
 
     /**
-     * 权限已存在
+     * 权限不存在
      */
     String PERMISSION_NOT_EXIST = PERMISSION_PREFIX + "PERMISSION.NOT.EXIST";
     String PERMISSION_NOT_EXIST_MSG = "权限不存在";
+
+    /**
+     * 用户权限不存在
+     */
+    String USER_PERMISSION_NOT_EXIST = PERMISSION_PREFIX + "USER.PERMISSION.NOT.EXIST";
+    String USER_PERMISSION_NOT_EXIST_MSG = " 用户权限不存在";
 
     /**
      * 权限组不存在

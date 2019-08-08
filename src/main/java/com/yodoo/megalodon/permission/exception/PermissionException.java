@@ -1,5 +1,9 @@
 package com.yodoo.megalodon.permission.exception;
 
+/**
+ * @Date 2019/7/11 10:56
+ * @author  by houzhen
+ */
 public class PermissionException extends RuntimeException {
     private String messageBundleKey;
 
