@@ -1,9 +1,7 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetUserDetailsDto;
-import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetUserDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -15,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -32,80 +32,6 @@ public class UserPermissionTargetUserDetailsService {
 
     @Autowired
     private UserPermissionDetailsService userPermissionDetailsService;
-
-    @Autowired
-    private UserService userService;
-
-
-    /**
-     * 通过用户id 查询用户管理目标用户列表
-     * @param userId
-     * @return
-     */
-    public List<UserDto> selectUserManageTargetUserListByUserId(Integer userId){
-        if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
-        }
-        List<UserDto> userDtoList = new ArrayList<>();
-        // 通过用户id 查询用户权限表，获取用户权限表id
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限id 查询用户管理目标公司,获取公司 ids
-                        List<Integer> userIds = this.getUserIdsByUserPermissionId(userPermissionId);
-                        if (!CollectionUtils.isEmpty(userIds)) {
-                            // 通过公司id 查询公司表信息
-                            List<UserDto> collect= userIds.stream()
-                                    .filter(Objects::nonNull)
-                                    .map(id -> {
-                                        return this.getUserDtoByUserId(id);
-                                    }).filter(Objects::nonNull).collect(Collectors.toList());
-                            if (!CollectionUtils.isEmpty(collect)){
-                                userDtoList.addAll(collect);
-                            }
-                        }
-                        return null;
-                    }).filter(Objects::nonNull).collect(Collectors.toList());
-        }
-        return userDtoList;
-    }
-
-    /**
-     * 查询没有被当前用户管理的公司(可管理的公司)
-     * @param userId
-     * @return
-     */
-    public List<UserDto> getAvailableUserManageTargetUserListByUserId(Integer userId){
-        if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
-        }
-        // 用户 ids
-        Set<Integer> userIdsListSet = new HashSet<>();
-
-        // 通过用户id查询用户权限表，获取用户权限表ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            List<List<Integer>> userIdsList = userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限表id 查询用户管理目标公司表，获取公司ids
-                        return this.getUserIdsByUserPermissionId(userPermissionId);
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            // 整合用户 ids
-            if (!CollectionUtils.isEmpty(userIdsList)){
-                userIdsList.stream()
-                        .filter(Objects::nonNull)
-                        .forEach(userIds -> {
-                            userIdsListSet.addAll(userIds);
-                        });
-            }
-        }
-        return userService.selectUserNotInIds(userIdsListSet);
-    }
 
     /**
      * 更新用户管理目标用户数据
@@ -142,7 +68,7 @@ public class UserPermissionTargetUserDetailsService {
      * @param userPermissionId
      * @return
      */
-    private List<Integer> getUserIdsByUserPermissionId(Integer userPermissionId) {
+    public List<Integer> getUserIdsByUserPermissionId(Integer userPermissionId) {
         Example example = new Example(UserPermissionTargetUserDetails.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("userPermissionId", userPermissionId);
@@ -158,17 +84,35 @@ public class UserPermissionTargetUserDetailsService {
     }
 
     /**
-     * 通过用户id 查询
-     * @param requestUserId
+     * 通过用户权限 ids 查询目标用户
+     * @param userPermissionIds
      * @return
      */
-    private UserDto getUserDtoByUserId(Integer requestUserId) {
-        User user = userService.selectByPrimaryKey(requestUserId);
-        if (user != null){
-            UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(user, userDto);
-            return userDto;
+    public List<UserPermissionTargetUserDetailsDto> getTargetUserDetailsByUserPermissionIds(List<Integer> userPermissionIds) {
+        List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDtoList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            userPermissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionId -> {
+                        Example example = new Example(UserPermissionTargetUserDetails.class);
+                        Example.Criteria criteria = example.createCriteria();
+                        criteria.andEqualTo("userPermissionId", userPermissionId);
+                        List<UserPermissionTargetUserDetails> targetUserList = userPermissionTargetUserDetailsMapper.selectByExample(example);
+                        if (!CollectionUtils.isEmpty(targetUserList)){
+                            List<UserPermissionTargetUserDetailsDto> collect = targetUserList.stream()
+                                    .filter(Objects::nonNull)
+                                    .map(userPermissionTargetUserDetails -> {
+                                        UserPermissionTargetUserDetailsDto userPermissionTargetUserDetailsDto = new UserPermissionTargetUserDetailsDto();
+                                        BeanUtils.copyProperties(userPermissionTargetUserDetails, userPermissionTargetUserDetailsDto);
+                                        return userPermissionTargetUserDetailsDto;
+                                    }).filter(Objects::nonNull).collect(Collectors.toList());
+                            if (!CollectionUtils.isEmpty(collect)){
+                                userPermissionTargetUserDetailsDtoList.addAll(collect);
+                            }
+                        }
+                        return null;
+                    }).filter(Objects::nonNull).count();
         }
-        return null;
+        return userPermissionTargetUserDetailsDtoList;
     }
 }

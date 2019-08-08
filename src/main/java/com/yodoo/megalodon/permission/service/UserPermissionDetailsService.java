@@ -1,7 +1,7 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.UserPermissionDetailsDto;
+import com.yodoo.megalodon.permission.dto.*;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -35,6 +35,15 @@ public class UserPermissionDetailsService {
 
     @Autowired
     private UserPermissionDetailsMapper userPermissionDetailsMapper;
+
+    @Autowired
+    private UserPermissionTargetGroupDetailsService userPermissionTargetGroupDetailsService;
+
+    @Autowired
+    private UserPermissionTargetCompanyDetailsService userPermissionTargetCompanyDetailsService;
+
+    @Autowired
+    private UserPermissionTargetUserDetailsService userPermissionTargetUserDetailsService;
 
     /**
      * 通过用户 id 查询 用户权限列表
@@ -139,5 +148,33 @@ public class UserPermissionDetailsService {
                     .count();
         }
         return count;
+    }
+
+    /**
+     * 在用户列表中点击权限
+     * @param userId
+     */
+    public ActionPermissionInUserListDto actionPermissionInUserList(Integer userId) {
+        ActionPermissionInUserListDto actionPermissionInUserListDto = new ActionPermissionInUserListDto();
+        // 获取用户权限 ids
+        List<Integer> userPermissionIds = getUserPermissionIdsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            // 目标集团
+            List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDto = userPermissionTargetGroupDetailsService.getTargetGroupDetailsByUserPermissionIds(userPermissionIds);
+            if (!CollectionUtils.isEmpty(userPermissionTargetGroupDetailsDto)){
+                actionPermissionInUserListDto.setUserPermissionTargetGroupDetailsDtoList(userPermissionTargetGroupDetailsDto);
+            }
+            // 目标公司
+            List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDto = userPermissionTargetCompanyDetailsService.getTargetCompanyDetailsByUserPermissionIds(userPermissionIds);
+            if (!CollectionUtils.isEmpty(userPermissionTargetCompanyDetailsDto)){
+                actionPermissionInUserListDto.setUserPermissionTargetCompanyDetailsDtoList(userPermissionTargetCompanyDetailsDto);
+            }
+            // 目标用户
+            List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDto = userPermissionTargetUserDetailsService.getTargetUserDetailsByUserPermissionIds(userPermissionIds);
+            if (!CollectionUtils.isEmpty(userPermissionTargetUserDetailsDto)){
+                actionPermissionInUserListDto.setUserPermissionTargetUserDetailsDtoList(userPermissionTargetUserDetailsDto);
+            }
+        }
+        return actionPermissionInUserListDto;
     }
 }
