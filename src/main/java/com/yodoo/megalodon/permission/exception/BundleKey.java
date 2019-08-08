@@ -97,4 +97,15 @@ public interface BundleKey {
     String PHONE_FORMAT_ERROR = PERMISSION_PREFIX + "PHONE.FORMAT.ERROR";
     String PHONE_FORMAT_ERROR_MSG = "电话格式错误";
 
+    /**
+     *  菜单已存在
+     **/
+    String MENU_EXIST = PERMISSION_PREFIX + "MENU.EXIST";
+    String MENU_EXIST_MSG = "菜单已存在";
+
+    /**
+     *  菜单已存在
+     **/
+    String MENU_NOT_EXIST = PERMISSION_PREFIX + "MENU.NOT.EXIST";
+    String MENU_NOT_EXIST_MSG = "菜单不存在";
 }
