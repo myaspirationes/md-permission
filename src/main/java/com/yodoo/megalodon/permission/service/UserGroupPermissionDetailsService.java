@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +33,9 @@ public class UserGroupPermissionDetailsService {
 
     @Autowired
     private PermissionGroupService permissionGroupService;
+
+    @Autowired
+    private PermissionGroupDetailsService permissionGroupDetailsService;
 
     /**
      * 用户组组权限组列表
@@ -102,5 +102,41 @@ public class UserGroupPermissionDetailsService {
                         return userGroupPermissionDetailsMapper.insertSelective(new UserGroupPermissionDetails(userGroupId, permissionGroupId));
                     }).filter(Objects::nonNull).count();
         }
+    }
+
+    /**
+     * 通过用户组id 查询权限组id,再通过权限组id查询权限详情表获取 权限 id
+     * @param userGroupIds
+     * @return
+     */
+    public Map<Integer, Set<Integer>> getPermissionIdsByUserGroupIds(Set<Integer> userGroupIds) {
+        // 每个用户组对应的权限ids
+        Map<Integer, Set<Integer>> permissionIdMap = new HashMap<>(userGroupIds.size());
+
+        if (!CollectionUtils.isEmpty(userGroupIds)){
+            Set<Integer> permissionGroupIdList = new HashSet<>();
+                    userGroupIds.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(userGroupId -> {
+                        // 通过用户组id  查询权限组id
+                        Example example = new Example(UserGroupPermissionDetails.class);
+                        Example.Criteria criteria = example.createCriteria();
+                        criteria.andEqualTo("userGroupId", userGroupId);
+                        List<UserGroupPermissionDetails> userGroupPermissionDetailsList = userGroupPermissionDetailsMapper.selectByExample(example);
+
+                        if (!CollectionUtils.isEmpty(userGroupPermissionDetailsList)){
+                            // 获取权限组ids
+                            Set<Integer> permissionGroupIds = userGroupPermissionDetailsList.stream().filter(Objects::nonNull).map(UserGroupPermissionDetails::getPermissionGroupId).filter(Objects::nonNull).collect(Collectors.toSet());
+                            if (!CollectionUtils.isEmpty(permissionGroupIds)){
+                                // 通过权限组id 查询权限id
+                                Set<Integer> permissionIds = permissionGroupDetailsService.getPermissionIds(permissionGroupIds);
+                                if (!CollectionUtils.isEmpty(permissionIds)){
+                                    permissionIdMap.put(userGroupId, permissionIds);
+                                }
+                            }
+                        }
+                    });
+        }
+        return permissionIdMap;
     }
 }

@@ -118,5 +118,4 @@ public class UserManagerApi {
     public Integer editUserGroup(UserGroupDto userGroupDto) {
         return userGroupService.editUserGroup(userGroupDto);
     }
-
 }

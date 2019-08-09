@@ -33,11 +33,6 @@ public class UserGroupDto extends BaseDto {
     private Set<Integer> permissionGroupIds;
 
     /**
-     * 用户权限 ids
-     */
-    private Set<Integer> userPermissionIds;
-
-    /**
      * 查询条件 List
      */
     private Set<ConditionDto> conditionDtoList;
@@ -75,15 +70,6 @@ public class UserGroupDto extends BaseDto {
 
     public UserGroupDto setPermissionGroupIds(Set<Integer> permissionGroupIds) {
         this.permissionGroupIds = permissionGroupIds;
-        return this;
-    }
-
-    public Set<Integer> getUserPermissionIds() {
-        return userPermissionIds;
-    }
-
-    public UserGroupDto setUserPermissionIds(Set<Integer> userPermissionIds) {
-        this.userPermissionIds = userPermissionIds;
         return this;
     }
 

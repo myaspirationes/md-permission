@@ -141,10 +141,6 @@ public class UserGroupService {
         if (insertCount != null && insertCount > 0){
             userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
         }
-        // 用户管理用户组权限表
-        if (insertCount != null && insertCount > 0){
-            userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroup.getId(), userGroupDto.getUserPermissionIds());
-        }
         // 用户组条件不为空
         if (insertCount != null && insertCount > 0){
             userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getConditionDtoList());
@@ -170,11 +166,6 @@ public class UserGroupService {
         // 权限组不为空，更新用户权限组详情
         if (updateCount != null && updateCount > 0){
             userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
-        }
-
-        // 用户管理用户组权限表
-        if (updateCount != null && updateCount > 0){
-            userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroup.getId(), userGroupDto.getUserPermissionIds());
         }
 
         // 用户组条件不为空
@@ -249,13 +240,6 @@ public class UserGroupService {
                 throw new PermissionException(BundleKey.PERMISSION_GROUP_NOT_EXIST, BundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
             }
         }
-        // 用户权限、通过id 查询，统计不存在的数量
-        if (!CollectionUtils.isEmpty(userGroupDto.getUserPermissionIds())){
-            Long userPermissionNoExistCount = userPermissionDetailsService.selectUserPermissionNoExistCountByIds(userGroupDto.getUserPermissionIds());
-            if (userPermissionNoExistCount != null && userPermissionNoExistCount > 0){
-                throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
-            }
-        }
         // 条件是否为空
         if (!CollectionUtils.isEmpty(userGroupDto.getConditionDtoList())){
             userGroupDto.getConditionDtoList().stream()
@@ -272,4 +256,5 @@ public class UserGroupService {
                     });
         }
     }
+
 }

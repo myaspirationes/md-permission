@@ -46,4 +46,13 @@ public class UserPermissionTargetUserGroupDetailsService {
                     .count();
         }
     }
+
+    /**
+     * 插入
+     * @param userGroupId
+     * @param userPermissionId
+     */
+    public void insertUserPermissionDetails(Integer userGroupId, Integer userPermissionId) {
+        userPermissionTargetUserGroupDetailsMapper.insertSelective(new UserPermissionTargetUserGroupDetails(userGroupId, userPermissionId));
+    }
 }

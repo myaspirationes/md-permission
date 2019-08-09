@@ -9,6 +9,7 @@ import com.yodoo.megalodon.permission.dto.CompanyDto;
 import com.yodoo.megalodon.permission.dto.GroupsDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.entity.User;
+import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
 import com.yodoo.megalodon.permission.enums.UserStatusEnum;
 import com.yodoo.megalodon.permission.exception.BundleKey;
@@ -67,6 +68,12 @@ public class UserService {
 
     @Autowired
     private GroupsService groupsService;
+
+    @Autowired
+    private UserGroupPermissionDetailsService userGroupPermissionDetailsService;
+
+    @Autowired
+    private UserPermissionTargetUserGroupDetailsService userPermissionTargetUserGroupDetailsService;
 
     /**
      * 根据账号查询用户
@@ -142,14 +149,14 @@ public class UserService {
         user.setPassword(Md5Util.md5Encode(PermissionConstants.DEFAULT_PASSWORD));
         Integer insertUserResponseCount = userMapper.insertSelective(user);
 
-        // 如果用户有所属用户组，更新用户组详情
-        if (!CollectionUtils.isEmpty(userDto.getUserGroupIds()) && insertUserResponseCount != null && insertUserResponseCount > 0){
+        // 更新用户表与用户关系表
+        if (insertUserResponseCount != null && insertUserResponseCount > 0){
             updateUserGroup(user.getId(), userDto.getUserGroupIds());
         }
 
-        // 用户权限不为空，更新用户权限详情
-        if (!CollectionUtils.isEmpty(userDto.getPermissionIds()) && insertUserResponseCount != null && insertUserResponseCount > 0){
-            updateUserPermissionDetails(user.getId(), userDto.getPermissionIds());
+        // 更新用户权限表，用户权限表与用户组关系表
+        if (insertUserResponseCount != null && insertUserResponseCount > 0){
+            updateUserPermissionDetails(user.getId(), userDto.getPermissionIds(), userDto.getUserGroupIds());
         }
         return insertUserResponseCount;
     }
@@ -167,13 +174,13 @@ public class UserService {
         Integer updateUserResponseCount = userMapper.updateByPrimaryKeySelective(user);
 
         // 如果用户有所属用户组，更新用户组详情
-        if (!CollectionUtils.isEmpty(userDto.getUserGroupIds()) && updateUserResponseCount != null && updateUserResponseCount > 0){
+        if (updateUserResponseCount != null && updateUserResponseCount > 0){
             updateUserGroup(user.getId(), userDto.getUserGroupIds());
         }
 
         // 用户权限不为空，更新用户权限详情
-        if (!CollectionUtils.isEmpty(userDto.getPermissionIds()) && updateUserResponseCount != null && updateUserResponseCount > 0){
-            updateUserPermissionDetails(user.getId(), userDto.getPermissionIds());
+        if (updateUserResponseCount != null && updateUserResponseCount > 0){
+            updateUserPermissionDetails(user.getId(), userDto.getPermissionIds(), userDto.getUserGroupIds());
         }
 
         return updateUserResponseCount;
@@ -533,13 +540,40 @@ public class UserService {
     }
 
     /**
-     * 添加用户权限详情
+     * 添加用户权限详情 TODO
      * @param userId
      * @param permissionIds
      */
-    private void updateUserPermissionDetails(Integer userId, Set<Integer> permissionIds) {
+    private void updateUserPermissionDetails(Integer userId, Set<Integer> permissionIds, Set<Integer> userGroupIds) {
+        // 查询用户组所属的权限
+        Map<Integer, Set<Integer>> permissionIdMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(userGroupIds)){
+            permissionIdMap = userGroupPermissionDetailsService.getPermissionIdsByUserGroupIds(userGroupIds);
+        }
+        // 把用户选择的权限id和用户所属的用户组权限合并
+        if (!CollectionUtils.isEmpty(permissionIdMap)){
+            for (Integer userGroupId : permissionIdMap.keySet()) {
+                Set<Integer> permissionIdList = permissionIdMap.get(userGroupId);
+                permissionIds.addAll(permissionIdList);
+            }
+        }
+        // 对于用户权限表，先删除再插入
         userPermissionDetailsService.deleteUserPermissionDetailsByUserId(userId);
         userPermissionDetailsService.insertUserPermissionDetails(userId, permissionIds);
+        // 把用户所有的用户权限查询出来
+        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList) && !CollectionUtils.isEmpty(permissionIdMap)){
+            for (Integer userGroupId : permissionIdMap.keySet()) {
+                Set<Integer> permissionIdList = permissionIdMap.get(userGroupId);
+                userPermissionDetailsList.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(userPermissionDetails -> {
+                            if (permissionIdList.contains(userPermissionDetails.getId())){
+                                userPermissionTargetUserGroupDetailsService.insertUserPermissionDetails(userGroupId,userPermissionDetails.getId());
+                            }
+                        });
+            }
+        }
     }
 
     /**

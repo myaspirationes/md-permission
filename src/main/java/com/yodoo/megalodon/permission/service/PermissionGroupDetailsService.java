@@ -6,7 +6,11 @@ import com.yodoo.megalodon.permission.mapper.PermissionGroupDetailsMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description ：权限组明细
@@ -27,9 +31,42 @@ public class PermissionGroupDetailsService {
      * @return
      */
     public Integer selectPermissionGroupDetailsCountByPermissionGroupId(Integer permissionGroupId) {
+        Example example = getPermissionGroupDetailsExampleByPermissionGroupId(permissionGroupId);
+        return permissionGroupDetailsMapper.selectCountByExample(example);
+    }
+
+    /**
+     * 通过权限组id 查询获取权限 ids
+     * @param permissionGroupIdList
+     * @return
+     */
+    public Set<Integer> getPermissionIds(Set<Integer> permissionGroupIdList) {
+        Set<Integer> permissionIdList = new HashSet<>();
+        if (!CollectionUtils.isEmpty(permissionGroupIdList)){
+            permissionGroupIdList.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(permissionGroupId -> {
+                        Example example = getPermissionGroupDetailsExampleByPermissionGroupId(permissionGroupId);
+                        List<PermissionGroupDetails> permissionGroupDetails = permissionGroupDetailsMapper.selectByExample(example);
+                        if (!CollectionUtils.isEmpty(permissionGroupDetails)){
+                            Set<Integer> collect = permissionGroupDetails.stream()
+                                    .filter(Objects::nonNull)
+                                    .map(PermissionGroupDetails::getPermissionId)
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.toSet());
+                            if (!CollectionUtils.isEmpty(collect)){
+                                permissionIdList.addAll(collect);
+                            }
+                        }
+                    });
+        }
+        return permissionIdList;
+    }
+
+    private Example getPermissionGroupDetailsExampleByPermissionGroupId(Integer permissionGroupId){
         Example example = new Example(PermissionGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("permissionGroupId", permissionGroupId);
-        return permissionGroupDetailsMapper.selectCountByExample(example);
+        return example;
     }
 }
