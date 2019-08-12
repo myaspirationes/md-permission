@@ -42,5 +42,4 @@ public class UserGroup extends BaseEntity {
     public void setGroupName(String groupName) {
         this.groupName = groupName == null ? null : groupName.trim();
     }
-
 }

@@ -6,10 +6,7 @@ import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
-import com.yodoo.megalodon.permission.entity.PermissionGroup;
-import com.yodoo.megalodon.permission.entity.SearchCondition;
-import com.yodoo.megalodon.permission.entity.User;
-import com.yodoo.megalodon.permission.entity.UserGroup;
+import com.yodoo.megalodon.permission.entity.*;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserGroupMapper;
@@ -216,6 +213,27 @@ public class UserGroupService {
         userGroupPermissionDetailsService.deleteUserGroupPermissionDetailsByUserGroupId(userGroupId);
         // 删除用户组
        return userGroupMapper.deleteByPrimaryKey(userGroupId);
+    }
+
+    /**
+     * 获取所有的用户组数据
+     * @return
+     */
+    public List<UserGroupDto> getUserGroupAll() {
+        Example example = new Example(UserGroup.class);
+        example.setOrderByClause("group_name ASC");
+        Example.Criteria criteria = example.createCriteria();
+        List<UserGroup> userGroups = userGroupMapper.selectByExample(example);
+        if (!CollectionUtils.isEmpty(userGroups)){
+            return userGroups.stream()
+                    .filter(Objects::nonNull)
+                    .map(userGroup -> {
+                        UserGroupDto userGroupDto = new UserGroupDto();
+                        BeanUtils.copyProperties(userGroup, userGroupDto);
+                        return userGroupDto;
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        }
+        return null;
     }
 
     /**

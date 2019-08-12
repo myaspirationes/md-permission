@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * @Description ：用户管理
  * @Author ：jinjun_luo
@@ -142,5 +144,14 @@ public class UserManagerApi {
     @PreAuthorize("hasAnyAuthority('user_manage')")
     public Integer deleteUserGroup(Integer userGroupId){
         return userGroupService.deleteUserGroup(userGroupId);
+    }
+
+    /**
+     * 查询所有用户组信息
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public List<UserGroupDto> getUserGroupAll(){
+        return userGroupService.getUserGroupAll();
     }
 }
