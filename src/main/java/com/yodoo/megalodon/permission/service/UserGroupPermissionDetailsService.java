@@ -90,9 +90,7 @@ public class UserGroupPermissionDetailsService {
     public void updateUserGroupPermissionDetails(Integer userGroupId, Set<Integer> permissionGroupIds){
         // 通过用户组id 删除
         if (userGroupId != null && userGroupId > 0){
-            UserGroupPermissionDetails userGroupPermissionDetails = new UserGroupPermissionDetails();
-            userGroupPermissionDetails.setUserGroupId(userGroupId);
-            userGroupPermissionDetailsMapper.delete(userGroupPermissionDetails);
+            deleteUserGroupPermissionDetailsByUserGroupId(userGroupId);
         }
         // 插入用户组权限组关系表数据
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(permissionGroupIds)){
@@ -119,9 +117,7 @@ public class UserGroupPermissionDetailsService {
                     .filter(Objects::nonNull)
                     .forEach(userGroupId -> {
                         // 通过用户组id  查询权限组id
-                        Example example = new Example(UserGroupPermissionDetails.class);
-                        Example.Criteria criteria = example.createCriteria();
-                        criteria.andEqualTo("userGroupId", userGroupId);
+                        Example example = getExample(userGroupId);
                         List<UserGroupPermissionDetails> userGroupPermissionDetailsList = userGroupPermissionDetailsMapper.selectByExample(example);
 
                         if (!CollectionUtils.isEmpty(userGroupPermissionDetailsList)){
@@ -138,5 +134,27 @@ public class UserGroupPermissionDetailsService {
                     });
         }
         return permissionIdMap;
+    }
+
+    /**
+     * 通过用户组id删除
+     * @param userGroupId
+     * @return
+     */
+    public Integer deleteUserGroupPermissionDetailsByUserGroupId(Integer userGroupId) {
+        Example example = getExample(userGroupId);
+        return userGroupPermissionDetailsMapper.deleteByExample(example);
+    }
+
+    /**
+     * 获取example
+     * @param userGroupId
+     * @return
+     */
+    private Example getExample(Integer userGroupId){
+        Example example = new Example(UserGroupPermissionDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userGroupId", userGroupId);
+        return example;
     }
 }

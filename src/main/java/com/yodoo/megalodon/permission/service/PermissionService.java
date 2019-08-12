@@ -6,6 +6,7 @@ import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.dto.PermissionDto;
 import com.yodoo.megalodon.permission.entity.Permission;
+import com.yodoo.megalodon.permission.entity.PermissionGroupDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -44,7 +45,10 @@ public class PermissionService {
     private PermissionMapper permissionMapper;
 
     @Autowired
-    private UserPermissionDetailsMapper userPermissionDetailsMapper;
+    private UserPermissionDetailsService userPermissionDetailsService;
+
+    @Autowired
+    private PermissionGroupDetailsService permissionGroupDetailsService;
 
     /**
      * 分页查询
@@ -111,7 +115,18 @@ public class PermissionService {
             throw new PermissionException(BundleKey.PERMISSION_NOT_EXIST, BundleKey.PERMISSION_NOT_EXIST_MSG);
         }
         permission.setPermissionName(permission.getPermissionName());
-        return permissionMapper.updateByPrimaryKey(permission);
+        return permissionMapper.updateByPrimaryKeySelective(permission);
+    }
+
+    /**
+     * 删除权限
+     * @param id
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public Integer deletePermission(Integer id){
+        deleteParameterCheck(id);
+        return permissionMapper.deleteByPrimaryKey(id);
     }
 
     /**
@@ -170,6 +185,21 @@ public class PermissionService {
         return responseList;
     }
 
+    /**
+     * 删除校验
+     * @param permissionId
+     */
+    private void deleteParameterCheck(Integer permissionId) {
+        if (permissionId == null || permissionId < 0){
+            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+        }
+        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByPermissionId(permissionId);
+        List<PermissionGroupDetails> permissionGroupDetailsList = permissionGroupDetailsService.selectPermissionGroupDetailsByPermissionId(permissionId);
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList) || !CollectionUtils.isEmpty(permissionGroupDetailsList)){
+            throw new PermissionException(BundleKey.THE_DATA_IS_STILL_IN_USE, BundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
+        }
+    }
+
     private Permission getPermissionByCode(String permissionCode) {
         RequestPrecondition.checkArgumentsNotEmpty(permissionCode);
         // 查询code是否存在
@@ -177,8 +207,7 @@ public class PermissionService {
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("permissionCode", permissionCode);
         example.and(criteria);
-        Permission permission = permissionMapper.selectOneByExample(example);
-        return permission;
+        return permissionMapper.selectOneByExample(example);
     }
 
     public List<Permission> selectPermissionByUserId(Integer userId) {
@@ -186,11 +215,7 @@ public class PermissionService {
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        Example userPermissionExa = new Example(UserPermissionDetails.class);
-        Example.Criteria userPermissionCri = userPermissionExa.createCriteria();
-        userPermissionCri.andEqualTo("userId", userId);
-        userPermissionExa.and(userPermissionCri);
-        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsMapper.selectByExample(userPermissionExa);
+        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)) {
             List<Integer> permissionIdList = userPermissionDetailsList.stream().map(UserPermissionDetails::getId).collect(Collectors.toList());
             Example permissionExa = new Example(Permission.class);

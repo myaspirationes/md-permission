@@ -7,6 +7,7 @@ import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.CompanyDto;
 import com.yodoo.megalodon.permission.dto.GroupsDto;
+import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
@@ -149,14 +150,9 @@ public class UserService {
         user.setPassword(Md5Util.md5Encode(PermissionConstants.DEFAULT_PASSWORD));
         Integer insertUserResponseCount = userMapper.insertSelective(user);
 
-        // 更新用户表与用户关系表
+        // 更新用户组表与用户关系表
         if (insertUserResponseCount != null && insertUserResponseCount > 0){
             updateUserGroup(user.getId(), userDto.getUserGroupIds());
-        }
-
-        // 更新用户权限表，用户权限表与用户组关系表
-        if (insertUserResponseCount != null && insertUserResponseCount > 0){
-            updateUserPermissionDetails(user.getId(), userDto.getPermissionIds(), userDto.getUserGroupIds());
         }
         return insertUserResponseCount;
     }
@@ -177,12 +173,6 @@ public class UserService {
         if (updateUserResponseCount != null && updateUserResponseCount > 0){
             updateUserGroup(user.getId(), userDto.getUserGroupIds());
         }
-
-        // 用户权限不为空，更新用户权限详情
-        if (updateUserResponseCount != null && updateUserResponseCount > 0){
-            updateUserPermissionDetails(user.getId(), userDto.getPermissionIds(), userDto.getUserGroupIds());
-        }
-
         return updateUserResponseCount;
     }
 
@@ -429,11 +419,21 @@ public class UserService {
     }
 
     /**
+     * 条件查询用户 TODO
+     * @param searchConditionDtoList
+     * @return
+     */
+    public List<User> selectUserListByCondition(List<SearchConditionDto> searchConditionDtoList) {
+        List<User> list = new ArrayList<>();
+        return list;
+    }
+
+    /**
      * 通过主键查询
      * @param id
      * @return
      */
-    public User selectByPrimaryKey(Integer id) {
+    private User selectByPrimaryKey(Integer id) {
         return userMapper.selectByPrimaryKey(id);
     }
 
@@ -442,7 +442,7 @@ public class UserService {
      * @param userIdsListSet
      * @return
      */
-    public List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
+    private List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
         if (!CollectionUtils.isEmpty(userIdsListSet)){
             Example example = new Example(User.class);
             Example.Criteria criteria = example.createCriteria();
@@ -654,14 +654,6 @@ public class UserService {
             Long userGroupNoExistCount = userGroupService.selectUserGroupNoExistCountByIds(userDto.getUserGroupIds());
             if (userGroupNoExistCount != null && userGroupNoExistCount > 0){
                 throw new PermissionException(BundleKey.USER_GROUP_NOT_EXIST, BundleKey.USER_GROUP_NOT_EXIST_MSG);
-            }
-        }
-
-        // 通过权限 id 查询，统计不存在的数量
-        if (!CollectionUtils.isEmpty(userDto.getPermissionIds())){
-            Long permissionNoExistCount = permissionService.selectPermissionNoExistCountByIds(userDto.getPermissionIds());
-            if (permissionNoExistCount != null && permissionNoExistCount > 0){
-                throw new PermissionException(BundleKey.PERMISSION_NOT_EXIST, BundleKey.PERMISSION_NOT_EXIST_MSG);
             }
         }
     }

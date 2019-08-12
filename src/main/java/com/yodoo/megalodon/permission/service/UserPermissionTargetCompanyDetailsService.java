@@ -119,9 +119,7 @@ public class UserPermissionTargetCompanyDetailsService {
      * @return
      */
     public List<Integer>  getCompanyIdsByUserPermissionId(Integer userPermissionId) {
-        Example example = new Example(UserPermissionTargetCompanyDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId", userPermissionId);
+        Example example = getExample(userPermissionId);
         List<UserPermissionTargetCompanyDetails> list = userPermissionTargetCompanyDetailsMapper.selectByExample(example);
         List<Integer> companyIds = new ArrayList<>();
         if (!CollectionUtils.isEmpty(list)){
@@ -143,9 +141,7 @@ public class UserPermissionTargetCompanyDetailsService {
             userPermissionIds.stream()
                     .filter(Objects::nonNull)
                     .map(userPermissionId -> {
-                        Example example = new Example(UserPermissionTargetCompanyDetails.class);
-                        Example.Criteria criteria = example.createCriteria();
-                        criteria.andEqualTo("userPermissionId", userPermissionId);
+                        Example example = getExample(userPermissionId);
                         List<UserPermissionTargetCompanyDetails> list = userPermissionTargetCompanyDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(list)){
                             List<UserPermissionTargetCompanyDetailsDto> collect = list.stream()
@@ -164,5 +160,12 @@ public class UserPermissionTargetCompanyDetailsService {
         }
         return userPermissionTargetCompanyDetailsDtoList;
 
+    }
+
+    private Example getExample(Integer userPermissionId){
+        Example example = new Example(UserPermissionTargetCompanyDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId", userPermissionId);
+        return example;
     }
 }

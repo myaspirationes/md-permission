@@ -32,6 +32,18 @@ public class PermissionManagerApi {
     @Autowired
     private SearchConditionService searchConditionService;
 
+    @Autowired
+    private PermissionGroupDetailsService permissionGroupDetailsService;
+
+    @Autowired
+    private UserPermissionTargetGroupDetailsService userPermissionTargetGroupDetailsService;
+
+    @Autowired
+    private UserPermissionTargetCompanyDetailsService userPermissionTargetCompanyDetailsService;
+
+    @Autowired
+    private UserPermissionTargetUserDetailsService userPermissionTargetUserDetailsService;
+
     /**
      * 在用户列表中点击权限,获取目标集团、目标公司、目标用户的list
      * @param userId
@@ -62,6 +74,16 @@ public class PermissionManagerApi {
     }
 
     /**
+     * 变更用户管理目标集团
+     * @param userPermissionTargetGroupDetailsDtoList
+     * @param userId
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public void updateUserPermissionTargetGroups(List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDtoList, Integer userId){
+        userPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups(userPermissionTargetGroupDetailsDtoList,userId);
+    }
+
+    /**
      * 通过用户id查询已管理的目标公司
      * @param userId
      * @return
@@ -82,6 +104,15 @@ public class PermissionManagerApi {
     }
 
     /**
+     * 更新用户管理目标公司数据
+     * @param userPermissionTargetCompanyDetailsDtoList
+     * @param userId
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public void updateUserPermissionTargetCompany(List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDtoList, Integer userId){
+        userPermissionTargetCompanyDetailsService.updateUserPermissionTargetCompany(userPermissionTargetCompanyDetailsDtoList,userId);
+    }
+    /**
      * 通过用户id查询已管理的目标用户
      * @param userId
      * @return
@@ -99,6 +130,16 @@ public class PermissionManagerApi {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public List<UserDto> getAvailableUserManageTargetUserListByUserId(Integer userId){
         return userService.getAvailableUserManageTargetUserListByUserId(userId);
+    }
+
+    /**
+     * 更新用户管理目标用户数据
+     * @param userPermissionTargetUserDetailsDtoList
+     * @param userId
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public void updateUserPermissionTargetUser(List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDtoList, Integer userId){
+        userPermissionTargetUserDetailsService.updateUserPermissionTargetUser(userPermissionTargetUserDetailsDtoList,userId);
     }
 
     /**
@@ -132,6 +173,16 @@ public class PermissionManagerApi {
     }
 
     /**
+     * 删除权限
+     * @param id
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public Integer deletePermission(Integer id){
+       return permissionService.deletePermission(id);
+    }
+
+    /**
      * 根据userId查询权限
      * @param userId
      * @return
@@ -152,7 +203,8 @@ public class PermissionManagerApi {
     }
 
     /**
-     * 添加权限组
+     * 添加权限组：
+     * 1、选权限
      * @param permissionGroupDto
      * @return
      */
@@ -162,7 +214,8 @@ public class PermissionManagerApi {
     }
 
     /**
-     * 更新权限组
+     * 更新权限组：
+     * 1、更新权限
      * @param permissionGroupDto
      * @return
      */
@@ -229,5 +282,15 @@ public class PermissionManagerApi {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public Integer deleteSearchCondition(Integer id){
         return searchConditionService.deleteSearchCondition(id);
+    }
+
+    /**
+     * 通过权限组id 查询
+     *
+     * @param permissionGroupId
+     * @return
+     */
+    public Integer selectPermissionGroupDetailsCountByPermissionGroupId(Integer permissionGroupId){
+       return permissionGroupDetailsService.selectPermissionGroupDetailsCountByPermissionGroupId(permissionGroupId);
     }
 }

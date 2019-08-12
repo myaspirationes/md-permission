@@ -58,4 +58,13 @@ public class MenuManagerApi {
     public void deleteMenu(MenuDto menuDto) {
         menuService.deleteMenu(menuDto);
     }
+
+    /**
+     * 根据用户id查询菜单树
+     * @param userId
+     * @return
+     */
+    public List<MenuDto> getMenuTree(Integer userId){
+        return menuTreeService.getMenuTree(userId);
+    }
 }

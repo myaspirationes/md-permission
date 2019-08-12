@@ -4,8 +4,11 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
+import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
+import com.yodoo.megalodon.permission.entity.PermissionGroup;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
+import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserGroup;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -19,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +57,12 @@ public class UserGroupService {
 
     @Autowired
     private UserGroupConditionService userGroupConditionService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private PermissionGroupDetailsService permissionGroupDetailsService;
 
     /**
      * 条件分页查询
@@ -143,7 +149,11 @@ public class UserGroupService {
         }
         // 用户组条件不为空
         if (insertCount != null && insertCount > 0){
-            userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getConditionDtoList());
+            userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getSearchConditionDtoList());
+        }
+        // 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
+        if (insertCount != null && insertCount > 0){
+            updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(userGroup.getId(),userGroupDto.getSearchConditionDtoList(),userGroupDto.getPermissionGroupIds());
         }
         return insertCount;
     }
@@ -170,9 +180,81 @@ public class UserGroupService {
 
         // 用户组条件不为空
         if (updateCount != null && updateCount > 0){
-            userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getConditionDtoList());
+            userGroupConditionService.updateUserGroupCondition(userGroup.getId(),userGroupDto.getSearchConditionDtoList());
+        }
+        // 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
+        if (updateCount != null && updateCount > 0){
+            updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(userGroup.getId(),userGroupDto.getSearchConditionDtoList(),userGroupDto.getPermissionGroupIds());
         }
         return updateCount;
+    }
+
+    /**
+     * 删除用户组
+     * @param userGroupId
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public Integer deleteUserGroup(Integer userGroupId) {
+        if (userGroupId == null || userGroupId < 0){
+            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+        }
+        Set<Integer> userIds = userGroupDetailsService.selectUserIdsByUserGroupId(userGroupId);
+        // 删除用户组条件
+        userGroupConditionService.deleteUserGroupConditionByUserGroupId(userGroupId);
+        // 删除用户权限
+        if (!CollectionUtils.isEmpty(userIds)){
+            userIds.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(userId -> {
+                        userPermissionDetailsService.deleteUserPermissionDetailsByUserId(userId);
+                    });
+        }
+        // 用户管理用户组权限表
+        userPermissionTargetUserGroupDetailsService.deleteUserPermissionTargetUserGroupDetailsByUserGroupId(userGroupId);
+        // 用户组权限组关系
+        userGroupPermissionDetailsService.deleteUserGroupPermissionDetailsByUserGroupId(userGroupId);
+        // 删除用户组
+       return userGroupMapper.deleteByPrimaryKey(userGroupId);
+    }
+
+    /**
+     * 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
+     * @param userGroupId
+     * @param searchConditionDtoList
+     */
+    private void updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(Integer userGroupId, List<SearchConditionDto> searchConditionDtoList, Set<Integer> permissionGroupIds) {
+        // 用户列表
+        List<User> userList = userService.selectUserListByCondition(searchConditionDtoList);
+        Set<Integer> userIds = new HashSet<>();
+        if (!CollectionUtils.isEmpty(userList)){
+            Set<Integer> collect = userList.stream().filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+        }
+        // 权限组ids
+        Set<Integer> permissionGroupIdList = new HashSet<>();
+        if (!CollectionUtils.isEmpty(permissionGroupIds)){
+            List<PermissionGroup> collect = permissionGroupIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(permissionGroupId -> {
+                        return permissionGroupService.selectByPrimaryKey(permissionGroupId);
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(collect)){
+                permissionGroupIdList = collect.stream().filter(Objects::nonNull).map(PermissionGroup::getId).collect(Collectors.toSet());
+            }
+        }
+        // 如果权限组列表不为空，更新用户组权限组关系数据
+        if (!CollectionUtils.isEmpty(permissionGroupIdList)){
+            userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroupId, permissionGroupIdList);
+        }
+        // 查询权限组对应权限的ids
+        Set<Integer> permissionIds = new HashSet<>();
+        if (!CollectionUtils.isEmpty(permissionGroupIdList)){
+            permissionIds = permissionGroupDetailsService.getPermissionIds(permissionGroupIdList);
+        }
+        // 更新用户权限，用户管理用户组权限表数据
+        if (!CollectionUtils.isEmpty(userIds) && !CollectionUtils.isEmpty(permissionIds)){
+            userPermissionDetailsService.updateUserPermission(userGroupId,userIds,permissionIds);
+        }
     }
 
     /**
@@ -241,20 +323,19 @@ public class UserGroupService {
             }
         }
         // 条件是否为空
-        if (!CollectionUtils.isEmpty(userGroupDto.getConditionDtoList())){
-            userGroupDto.getConditionDtoList().stream()
+        if (!CollectionUtils.isEmpty(userGroupDto.getSearchConditionDtoList())){
+            userGroupDto.getSearchConditionDtoList().stream()
                     .filter(Objects::nonNull)
                     .forEach(conditionDto -> {
-                        if (conditionDto.getSearchConditionId() == null || conditionDto.getSearchConditionId() < 0
-                                || StringUtils.isBlank(conditionDto.getMatchValue()) || StringUtils.isBlank(conditionDto.getOperator())){
+                        if (conditionDto.getId() == null || conditionDto.getId() < 0
+                                || StringUtils.isBlank(conditionDto.getConditionCode()) || StringUtils.isBlank(conditionDto.getConditionName())){
                             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
                         }
-                        SearchCondition searchCondition = searchConditionService.selectByPrimaryKey(conditionDto.getSearchConditionId());
+                        SearchCondition searchCondition = searchConditionService.selectByPrimaryKey(conditionDto.getId());
                         if (searchCondition == null){
                             throw new PermissionException(BundleKey.SEARCH_CONDITION_NOT_EXIST, BundleKey.SEARCH_CONDITION_NOT_EXIST_MSG);
                         }
                     });
         }
     }
-
 }

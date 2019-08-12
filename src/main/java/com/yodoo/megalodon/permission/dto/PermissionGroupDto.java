@@ -2,6 +2,8 @@ package com.yodoo.megalodon.permission.dto;
 
 import com.yodoo.megalodon.permission.common.BaseDto;
 
+import java.util.Set;
+
 /**
  * @Description ：权限组
  * @Author ：jinjun_luo
@@ -18,6 +20,11 @@ public class PermissionGroupDto extends BaseDto {
      * 权限组名称
      **/
     private String groupName;
+
+    /**
+     * 权限ids
+     */
+    private Set<Integer> permissionIds;
 
     public PermissionGroupDto() {
     }
@@ -42,6 +49,15 @@ public class PermissionGroupDto extends BaseDto {
 
     public PermissionGroupDto setGroupName(String groupName) {
         this.groupName = groupName;
+        return this;
+    }
+
+    public Set<Integer> getPermissionIds() {
+        return permissionIds;
+    }
+
+    public PermissionGroupDto setPermissionIds(Set<Integer> permissionIds) {
+        this.permissionIds = permissionIds;
         return this;
     }
 }

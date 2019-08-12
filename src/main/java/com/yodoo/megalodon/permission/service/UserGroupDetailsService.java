@@ -9,8 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @Description ：用户组关系明细
@@ -62,9 +65,33 @@ public class UserGroupDetailsService {
      * @return
      */
     public Integer selectCountByUserGroupId(Integer userGroupId) {
+        Example example = getExample(userGroupId);
+        return userGroupDetailsMapper.selectCountByExample(example);
+    }
+
+    /**
+     * 通过用户组id查询用户ids
+     * @param userGroupId
+     */
+    public Set<Integer>  selectUserIdsByUserGroupId(Integer userGroupId) {
+        Example example = getExample(userGroupId);
+        List<UserGroupDetails> userGroupDetails = userGroupDetailsMapper.selectByExample(example);
+        Set<Integer> userIds = new HashSet<>();
+        if (!CollectionUtils.isEmpty(userGroupDetails)){
+            userIds = userGroupDetails.stream()
+                    .filter(Objects::nonNull)
+                    .map(UserGroupDetails::getUserId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+        }
+        return userIds;
+    }
+
+
+    private Example getExample(Integer userGroupId){
         Example example = new Example(UserGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("userGroupId", userGroupId);
-        return userGroupDetailsMapper.selectCountByExample(example);
+        return example;
     }
 }

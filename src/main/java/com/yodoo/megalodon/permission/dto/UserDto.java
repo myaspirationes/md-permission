@@ -69,11 +69,6 @@ public class UserDto extends BaseDto {
     private Integer status;
 
     /**
-     * 权限 ids
-     */
-    private Set<Integer> permissionIds;
-
-    /**
      * 用户组ids
      */
     private Set<Integer> userGroupIds;
@@ -174,15 +169,6 @@ public class UserDto extends BaseDto {
 
     public UserDto setStatus(Integer status) {
         this.status = status;
-        return this;
-    }
-
-    public Set<Integer> getPermissionIds() {
-        return permissionIds;
-    }
-
-    public UserDto setPermissionIds(Set<Integer> permissionIds) {
-        this.permissionIds = permissionIds;
         return this;
     }
 

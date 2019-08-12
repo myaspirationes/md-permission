@@ -69,9 +69,7 @@ public class UserPermissionTargetUserDetailsService {
      * @return
      */
     public List<Integer> getUserIdsByUserPermissionId(Integer userPermissionId) {
-        Example example = new Example(UserPermissionTargetUserDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId", userPermissionId);
+        Example example = getExample(userPermissionId);
         List<UserPermissionTargetUserDetails> targetUserList = userPermissionTargetUserDetailsMapper.selectByExample(example);
         List<Integer> userIds = new ArrayList<>();
         if (!CollectionUtils.isEmpty(targetUserList)){
@@ -94,9 +92,7 @@ public class UserPermissionTargetUserDetailsService {
             userPermissionIds.stream()
                     .filter(Objects::nonNull)
                     .map(userPermissionId -> {
-                        Example example = new Example(UserPermissionTargetUserDetails.class);
-                        Example.Criteria criteria = example.createCriteria();
-                        criteria.andEqualTo("userPermissionId", userPermissionId);
+                        Example example = getExample(userPermissionId);
                         List<UserPermissionTargetUserDetails> targetUserList = userPermissionTargetUserDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(targetUserList)){
                             List<UserPermissionTargetUserDetailsDto> collect = targetUserList.stream()
@@ -114,5 +110,12 @@ public class UserPermissionTargetUserDetailsService {
                     }).filter(Objects::nonNull).count();
         }
         return userPermissionTargetUserDetailsDtoList;
+    }
+
+    private Example getExample(Integer userPermissionId){
+        Example example = new Example(UserPermissionTargetUserDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId", userPermissionId);
+        return example;
     }
 }

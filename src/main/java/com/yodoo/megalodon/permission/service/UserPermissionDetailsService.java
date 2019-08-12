@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +42,9 @@ public class UserPermissionDetailsService {
     @Autowired
     private UserPermissionTargetUserDetailsService userPermissionTargetUserDetailsService;
 
+    @Autowired
+    private UserPermissionTargetUserGroupDetailsService userPermissionTargetUserGroupDetailsService;
+
     /**
      * 通过用户 id 查询 用户权限列表
      *
@@ -57,6 +57,19 @@ public class UserPermissionDetailsService {
         criteria.andEqualTo("userId",userId);
         return userPermissionDetailsMapper.selectByExample(example);
     }
+
+    /**
+     * 通过权限id查询
+     * @param permissionId
+     * @return
+     */
+    public List<UserPermissionDetails> selectUserPermissionDetailsByPermissionId(Integer permissionId) {
+        Example example = new Example(UserPermissionDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("permissionId",permissionId);
+        return userPermissionDetailsMapper.selectByExample(example);
+    }
+
 
     /**
      * 通过用户id查询获取用户权限表 ids
@@ -82,9 +95,10 @@ public class UserPermissionDetailsService {
      * @return
      */
     public Integer deleteUserPermissionDetailsByUserId(Integer userId) {
-        UserPermissionDetails userPermissionDetails = new UserPermissionDetails();
-        userPermissionDetails.setUserId(userId);
-        return userPermissionDetailsMapper.delete(userPermissionDetails);
+        Example example = new Example(UserPermissionDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userId", userId);
+        return userPermissionDetailsMapper.deleteByExample(example);
     }
 
     /**
@@ -105,29 +119,48 @@ public class UserPermissionDetailsService {
     /**
      * 变更权限
      * @Author houzhen
-     * @Date 10:23 2019/8/6
+     * @Date 10:23 2019/8/6 userGroupId,userList,permissionIds
      **/
-    public void updateUserPermission (List < UserPermissionDetailsDto > userPermissionDetailsDtoList, Integer userId)
+    public void updateUserPermission (Integer userGroupId, Set<Integer> userIds, Set<Integer> permissionIds)
     {
-        logger.info("UserPermissionDetailsService.updateUserPermission userPermissionDetailsDtoList:{}", JsonUtils.obj2json(userPermissionDetailsDtoList));
+        logger.info("UserPermissionDetailsService.updateUserPermission userGroupId : {},userIds:{},permissionIds:{}", userGroupId,JsonUtils.obj2json(userIds),JsonUtils.obj2json(permissionIds));
         // 参数判断
-        if (userId == null) {
+        if (userGroupId == null && userGroupId < 0) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        // 先删除旧的数据
-        Example example = new Example(UserPermissionDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userId", userId);
-        example.and(criteria);
-        userPermissionDetailsMapper.deleteByExample(example);
-        // 增加修改后的权限
-        if (!CollectionUtils.isEmpty(userPermissionDetailsDtoList)) {
-            List<UserPermissionDetails> addList = userPermissionDetailsDtoList.stream().map(dto -> {
-                UserPermissionDetails userPermissionDetails = new UserPermissionDetails();
-                BeanUtils.copyProperties(dto, userPermissionDetails);
-                return userPermissionDetails;
-            }).collect(Collectors.toList());
-            userPermissionDetailsMapper.insertList(addList);
+        // 删除用户权限表数据
+        if (!CollectionUtils.isEmpty(userIds)){
+            userIds.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(userId -> {
+                        // 先删除旧的数据
+                        Example example = new Example(UserPermissionDetails.class);
+                        Example.Criteria criteria = example.createCriteria();
+                        criteria.andEqualTo("userId", userId);
+                        userPermissionDetailsMapper.deleteByExample(example);
+                    });
+        }
+        // 用户ids和权限ids不为空
+        Set<Integer> userPermissionDetailsIds = new HashSet<>();
+        // 插入用户权限表数据
+        if (!CollectionUtils.isEmpty(userIds) && !CollectionUtils.isEmpty(permissionIds)){
+            userIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(userId -> {
+                        permissionIds.stream()
+                                .filter(Objects::nonNull)
+                                .forEach(permissionId -> {
+                                    UserPermissionDetails userPermissionDetails = new UserPermissionDetails(userId, permissionId);
+                                    userPermissionDetailsMapper.insertSelective(userPermissionDetails);
+                                    userPermissionDetailsIds.add(userPermissionDetails.getId());
+                                });
+                        return null;
+                    }).count();
+        }
+
+        // 更新用户组权限关系表
+        if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(userPermissionDetailsIds)){
+            userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroupId, userPermissionDetailsIds);
         }
     }
 

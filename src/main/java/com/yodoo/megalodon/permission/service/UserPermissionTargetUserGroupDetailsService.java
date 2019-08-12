@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import tk.mybatis.mapper.entity.Example;
 
 import java.util.Objects;
 import java.util.Set;
@@ -31,19 +32,15 @@ public class UserPermissionTargetUserGroupDetailsService {
     public void updateUserPermissionTargetUserGroupDetails(Integer userGroupId, Set<Integer> userPermissionIds){
         // 通过用户组id 删除
         if (userGroupId != null && userGroupId > 0){
-            UserPermissionTargetUserGroupDetails userPermissionTargetUserGroupDetails = new UserPermissionTargetUserGroupDetails();
-            userPermissionTargetUserGroupDetails.setUserGroupId(userGroupId);
-            userPermissionTargetUserGroupDetailsMapper.delete(userPermissionTargetUserGroupDetails);
+            deleteUserPermissionTargetUserGroupDetailsByUserGroupId(userGroupId);
         }
         // 插入目标用户组数据
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(userPermissionIds)){
             userPermissionIds.stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        return userPermissionTargetUserGroupDetailsMapper.insertSelective(new UserPermissionTargetUserGroupDetails(userGroupId, userPermissionId));
-                    })
-                    .filter(Objects::nonNull)
-                    .count();
+                    .forEach(userPermissionId -> {
+                        userPermissionTargetUserGroupDetailsMapper.insertSelective(new UserPermissionTargetUserGroupDetails(userGroupId, userPermissionId));
+                    });
         }
     }
 
@@ -54,5 +51,16 @@ public class UserPermissionTargetUserGroupDetailsService {
      */
     public void insertUserPermissionDetails(Integer userGroupId, Integer userPermissionId) {
         userPermissionTargetUserGroupDetailsMapper.insertSelective(new UserPermissionTargetUserGroupDetails(userGroupId, userPermissionId));
+    }
+
+    /**
+     * 通过用户组id 删除
+     * @param userGroupId
+     */
+    public Integer deleteUserPermissionTargetUserGroupDetailsByUserGroupId(Integer userGroupId) {
+        Example example = new Example(UserPermissionTargetUserGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userGroupId", userGroupId);
+        return userPermissionTargetUserGroupDetailsMapper.deleteByExample(example);
     }
 }

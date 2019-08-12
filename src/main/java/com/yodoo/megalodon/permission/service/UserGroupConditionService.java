@@ -1,7 +1,7 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.ConditionDto;
+import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.mapper.UserGroupConditionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,28 +41,37 @@ public class UserGroupConditionService {
     /**
      * 更新用户组时，更新用户组条件表
      * @param userGroupId
-     * @param conditionDtoList
+     * @param searchConditionDtoList
      */
-    public void updateUserGroupCondition(Integer userGroupId, Set<ConditionDto> conditionDtoList) {
+    public void updateUserGroupCondition(Integer userGroupId, List<SearchConditionDto> searchConditionDtoList) {
         // 删除
         if (userGroupId != null && userGroupId > 0){
-            Example example = new Example(UserGroupCondition.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andEqualTo("userGroupId", userGroupId);
-            userGroupConditionMapper.deleteByExample(example);
+            deleteUserGroupConditionByUserGroupId(userGroupId);
         }
         // 插入
-        if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(conditionDtoList)){
-            conditionDtoList.stream()
+        if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(searchConditionDtoList)){
+            searchConditionDtoList.stream()
                     .filter(Objects::nonNull)
                     .map(conditionDto -> {
                         UserGroupCondition userGroupCondition = new UserGroupCondition();
                         userGroupCondition.setUserGroupId(userGroupId);
-                        userGroupCondition.setSearchConditionId(conditionDto.getSearchConditionId());
-                        userGroupCondition.setOperator(conditionDto.getOperator());
-                        userGroupCondition.setMatchValue(conditionDto.getMatchValue());
+                        userGroupCondition.setSearchConditionId(conditionDto.getId());
+                        userGroupCondition.setOperator(conditionDto.getConditionCode());
+                        userGroupCondition.setMatchValue(conditionDto.getConditionName());
                         return userGroupConditionMapper.insertSelective(userGroupCondition);
                     }).filter(Objects::nonNull).count();
         }
+    }
+
+    /**
+     * 通过用户组id 删除
+     * @param userGroupId
+     * @return
+     */
+    public Integer deleteUserGroupConditionByUserGroupId(Integer userGroupId) {
+        Example example = new Example(UserGroupCondition.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userGroupId", userGroupId);
+        return userGroupConditionMapper.deleteByExample(example);
     }
 }

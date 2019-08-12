@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -38,10 +39,11 @@ public class UserPermissionTargetGroupDetailsService {
     private UserPermissionDetailsService userPermissionDetailsService;
 
     /**
-     * 变更权限
+     * 变更权限用户管理目标集团
      * @Author houzhen
      * @Date 10:23 2019/8/6
      **/
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
     public void updateUserPermissionTargetGroups(List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDtoList, Integer userId) {
         logger.info("UserPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups userPermissionDetailsDtoList:{}", JsonUtils.obj2json(userPermissionTargetGroupDetailsDtoList));
         // 参数判断
@@ -76,9 +78,7 @@ public class UserPermissionTargetGroupDetailsService {
     public List<Integer>  getGroupIdsByUserPermissionId(Integer userPermissionId) {
         List<Integer> groupsIds = new ArrayList<>();
 
-        Example example = new Example(UserPermissionTargetGroupDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId", userPermissionId);
+        Example example = getExample(userPermissionId);
         List<UserPermissionTargetGroupDetails> list = userPermissionTargetGroupDetailsMapper.selectByExample(example);
         if (!CollectionUtils.isEmpty(list)){
             groupsIds = list.stream()
@@ -100,9 +100,7 @@ public class UserPermissionTargetGroupDetailsService {
             userPermissionIds.stream()
                     .filter(Objects::nonNull)
                     .map(userPermissionId -> {
-                        Example example = new Example(UserPermissionTargetGroupDetails.class);
-                        Example.Criteria criteria = example.createCriteria();
-                        criteria.andEqualTo("userPermissionId", userPermissionId);
+                        Example example = getExample(userPermissionId);
                         List<UserPermissionTargetGroupDetails> list = userPermissionTargetGroupDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(list)){
                             List<UserPermissionTargetGroupDetailsDto> collect = list.stream()
@@ -120,5 +118,12 @@ public class UserPermissionTargetGroupDetailsService {
                     }).count();
         }
         return UserPermissionTargetGroupDetailsDtoList;
+    }
+
+    private Example getExample(Integer userPermissionId){
+        Example example = new Example(UserPermissionTargetGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId", userPermissionId);
+        return example;
     }
 }

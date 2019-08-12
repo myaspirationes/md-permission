@@ -3,6 +3,8 @@ package com.yodoo.megalodon.permission.dto;
 
 import com.yodoo.megalodon.permission.common.BaseDto;
 
+import javax.validation.constraints.Null;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -35,7 +37,7 @@ public class UserGroupDto extends BaseDto {
     /**
      * 查询条件 List
      */
-    private Set<ConditionDto> conditionDtoList;
+    private List<SearchConditionDto> searchConditionDtoList;
 
     public String getGroupCode() {
         return groupCode;
@@ -73,12 +75,12 @@ public class UserGroupDto extends BaseDto {
         return this;
     }
 
-    public Set<ConditionDto> getConditionDtoList() {
-        return conditionDtoList;
+    public List<SearchConditionDto> getSearchConditionDtoList() {
+        return searchConditionDtoList;
     }
 
-    public UserGroupDto setConditionDtoList(Set<ConditionDto> conditionDtoList) {
-        this.conditionDtoList = conditionDtoList;
+    public UserGroupDto setSearchConditionDtoList(List<SearchConditionDto> searchConditionDtoList) {
+        this.searchConditionDtoList = searchConditionDtoList;
         return this;
     }
 }

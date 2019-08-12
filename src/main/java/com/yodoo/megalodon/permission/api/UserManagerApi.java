@@ -3,6 +3,7 @@ package com.yodoo.megalodon.permission.api;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
+import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.service.UserGroupService;
 import com.yodoo.megalodon.permission.service.UserPermissionDetailsService;
 import com.yodoo.megalodon.permission.service.UserService;
@@ -39,8 +40,7 @@ public class UserManagerApi {
 
     /**
      * 添加用户：
-     * 1、添加用户可以设定用户所拥有的权限： Set<Integer> permissionIds
-     * 2、添加用户可以选择用户所属的用户组：Set<Integer> userGroupIds
+     * 1、添加用户可以选择用户所属的用户组：Set<Integer> userGroupIds
      * @param userDto
      * @return
      */
@@ -51,9 +51,7 @@ public class UserManagerApi {
 
     /**
      * 更新用户：
-     * 1、更新用户可以更新用户所拥有的权限：Set<Integer> permissionIds
-     * 2、更新用户可以更新用户所属的用户组：Set<Integer> userGroupIds
-     * 注意：用户所拥有的权限和所属的用户组数据要全传进来，后台逻辑
+     * 1、更新用户可以更新用户所属的用户组：Set<Integer> userGroupIds
      *
      * @param userDto
      * @return
@@ -84,6 +82,16 @@ public class UserManagerApi {
     }
 
     /**
+     * 通过账号查询
+     * @param account
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public User getUserByAccount(String account){
+        return userService.getUserByAccount(account);
+    }
+
+    /**
      * 条件分页查询用户组
      * @param userGroupDto
      * @return
@@ -98,6 +106,7 @@ public class UserManagerApi {
      * 1、用户组权限表
      * 2、用户管理用户组权限表
      * 3、用户组条件表
+     * 4、用户管理用户组权限表
      *
      * @param userGroupDto
      */
@@ -111,11 +120,27 @@ public class UserManagerApi {
      * 1、用户组权限表
      * 2、用户管理用户组权限表
      * 3、用户组条件表
+     * 4、用户管理用户组权限表
      * @param userGroupDto
      * @return
      */
     @PreAuthorize("hasAnyAuthority('user_manage')")
     public Integer editUserGroup(UserGroupDto userGroupDto) {
         return userGroupService.editUserGroup(userGroupDto);
+    }
+
+    /**
+     * 删除用户组
+     * 1、删除用户组条件
+     * 2、删除用户权限
+     * 3、用户管理用户组权限表
+     * 4、用户组权限组关系
+     * 5、删除用户组
+     * @param userGroupId
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public Integer deleteUserGroup(Integer userGroupId){
+        return userGroupService.deleteUserGroup(userGroupId);
     }
 }

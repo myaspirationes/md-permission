@@ -63,6 +63,37 @@ public class PermissionGroupDetailsService {
         return permissionIdList;
     }
 
+    /**
+     * 通过权限id 查询
+     * @param permissionId
+     * @return
+     */
+    public List<PermissionGroupDetails> selectPermissionGroupDetailsByPermissionId(Integer permissionId) {
+        Example example = new Example(PermissionGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("permissionId", permissionId);
+        return permissionGroupDetailsMapper.selectByExample(example);
+    }
+
+    /**
+     * 通过id 删除
+     * @param permissionGroupId
+     * @return
+     */
+    public Integer deleteByPrimaryKey(Integer permissionGroupId){
+        return permissionGroupDetailsMapper.deleteByPrimaryKey(permissionGroupId);
+    }
+
+    public void insertPermissionGroupDetails(Integer permissionGroupId, Set<Integer> permissionIds){
+        if (permissionGroupId != null && permissionGroupId > 0 && !CollectionUtils.isEmpty(permissionIds)){
+            permissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(permissionId -> {
+                        permissionGroupDetailsMapper.insertSelective(new PermissionGroupDetails(permissionGroupId, permissionId));
+                    });
+        }
+    }
+
     private Example getPermissionGroupDetailsExampleByPermissionGroupId(Integer permissionGroupId){
         Example example = new Example(PermissionGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();
