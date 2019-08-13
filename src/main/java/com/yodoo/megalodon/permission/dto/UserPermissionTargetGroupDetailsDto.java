@@ -3,7 +3,7 @@ package com.yodoo.megalodon.permission.dto;
 import com.yodoo.megalodon.permission.common.BaseDto;
 
 /**
- * 权限
+ * 用户管理目标集团
  * @Author houzhen
  * @Date 15:22 2019/8/5
 **/

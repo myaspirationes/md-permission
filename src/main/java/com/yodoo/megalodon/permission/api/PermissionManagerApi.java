@@ -1,7 +1,11 @@
 package com.yodoo.megalodon.permission.api;
 
+import com.yodoo.feikongbao.provisioning.domain.system.dto.CompanyDto;
+import com.yodoo.feikongbao.provisioning.domain.system.dto.GroupsDto;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.dto.*;
+import com.yodoo.megalodon.permission.entity.Permission;
+import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -75,12 +79,11 @@ public class PermissionManagerApi {
 
     /**
      * 变更用户管理目标集团
-     * @param userPermissionTargetGroupDetailsDtoList
-     * @param userId
+     * @param userPermissionTargetDto
      */
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public void updateUserPermissionTargetGroups(List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDtoList, Integer userId){
-        userPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups(userPermissionTargetGroupDetailsDtoList,userId);
+    public void updateUserPermissionTargetGroups(UserPermissionTargetDto userPermissionTargetDto){
+        userPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups(userPermissionTargetDto);
     }
 
     /**
@@ -105,13 +108,13 @@ public class PermissionManagerApi {
 
     /**
      * 更新用户管理目标公司数据
-     * @param userPermissionTargetCompanyDetailsDtoList
-     * @param userId
+     * @param userPermissionTargetDto
      */
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public void updateUserPermissionTargetCompany(List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDtoList, Integer userId){
-        userPermissionTargetCompanyDetailsService.updateUserPermissionTargetCompany(userPermissionTargetCompanyDetailsDtoList,userId);
+    public void updateUserPermissionTargetCompany(UserPermissionTargetDto userPermissionTargetDto){
+        userPermissionTargetCompanyDetailsService.updateUserPermissionTargetCompany(userPermissionTargetDto);
     }
+
     /**
      * 通过用户id查询已管理的目标用户
      * @param userId
@@ -134,12 +137,11 @@ public class PermissionManagerApi {
 
     /**
      * 更新用户管理目标用户数据
-     * @param userPermissionTargetUserDetailsDtoList
-     * @param userId
+     * @param userPermissionTargetDto
      */
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public void updateUserPermissionTargetUser(List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDtoList, Integer userId){
-        userPermissionTargetUserDetailsService.updateUserPermissionTargetUser(userPermissionTargetUserDetailsDtoList,userId);
+    public void updateUserPermissionTargetUser(UserPermissionTargetDto userPermissionTargetDto){
+        userPermissionTargetUserDetailsService.updateUserPermissionTargetUser(userPermissionTargetDto);
     }
 
     /**
@@ -188,7 +190,7 @@ public class PermissionManagerApi {
      * @return
      */
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public List<PermissionDto> getPermissionByUserId(Integer userId) {
+    public List<Permission> getPermissionByUserId(Integer userId) {
         return permissionService.getPermissionByUserId(userId);
     }
 
@@ -292,5 +294,13 @@ public class PermissionManagerApi {
      */
     public Integer selectPermissionGroupDetailsCountByPermissionGroupId(Integer permissionGroupId){
        return permissionGroupDetailsService.selectPermissionGroupDetailsCountByPermissionGroupId(permissionGroupId);
+    }
+
+    /**
+     * 查询所有条件
+     * @return
+     */
+    public List<SearchCondition> getAllSearchCondition(){
+        return searchConditionService.getAllSearchCondition();
     }
 }

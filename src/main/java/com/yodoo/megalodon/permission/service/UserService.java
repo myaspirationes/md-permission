@@ -2,11 +2,12 @@ package com.yodoo.megalodon.permission.service;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.yodoo.feikongbao.provisioning.domain.system.dto.CompanyDto;
+import com.yodoo.feikongbao.provisioning.domain.system.dto.GroupsDto;
+import com.yodoo.feikongbao.provisioning.domain.system.service.GroupsService;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.contract.PermissionConstants;
-import com.yodoo.megalodon.permission.dto.CompanyDto;
-import com.yodoo.megalodon.permission.dto.GroupsDto;
 import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.entity.User;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  * @author by houzhen
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserService {
 
     private static Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -51,9 +52,6 @@ public class UserService {
 
     @Autowired
     private UserGroupDetailsService userGroupDetailsService;
-
-    @Autowired
-    private PermissionService permissionService;
 
     @Autowired
     private UserPermissionDetailsService userPermissionDetailsService;

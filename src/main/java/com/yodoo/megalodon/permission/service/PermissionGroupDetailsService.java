@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * @Date ： 2019/7/29 0029
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class PermissionGroupDetailsService {
 
     @Autowired

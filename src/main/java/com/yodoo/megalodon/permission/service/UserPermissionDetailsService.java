@@ -9,7 +9,6 @@ import com.yodoo.megalodon.permission.mapper.UserPermissionDetailsMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
  * @Date ： 2019/7/30 0030
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserPermissionDetailsService {
 
     private static Logger logger = LoggerFactory.getLogger(UserPermissionDetailsService.class);
@@ -209,5 +208,14 @@ public class UserPermissionDetailsService {
             }
         }
         return actionPermissionInUserListDto;
+    }
+
+    /**
+     * 通过id查询
+     * @param id
+     * @return
+     */
+    public UserPermissionDetails selectByPrimaryKey(Integer id){
+        return userPermissionDetailsMapper.selectByPrimaryKey(id);
     }
 }

@@ -18,7 +18,7 @@ import java.util.Set;
  * @Date ： 2019/8/7 0007
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserPermissionTargetUserGroupDetailsService {
 
     @Autowired

@@ -11,7 +11,6 @@ import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.PermissionMapper;
-import com.yodoo.megalodon.permission.mapper.UserPermissionDetailsMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
 import com.yodoo.megalodon.permission.util.RequestPrecondition;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +35,7 @@ import java.util.stream.Collectors;
  * @Date 15:21 2019/8/5
 **/
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class PermissionService {
 
     private static Logger logger = LoggerFactory.getLogger(PermissionService.class);
@@ -135,21 +134,13 @@ public class PermissionService {
      * @Date 17:21 2019/8/5
     **/
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public List<PermissionDto> getPermissionByUserId(Integer userId) {
+    public List<Permission> getPermissionByUserId(Integer userId) {
         logger.info("PermissionService.getPermissionByUserId userId:{}", userId);
         List<PermissionDto> responseList = new ArrayList<>();
         if (userId == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        List<Permission> permissionList = this.selectPermissionByUserId(userId);
-        if (!CollectionUtils.isEmpty(permissionList)) {
-            responseList = permissionList.stream().map(permission -> {
-                PermissionDto dto = new PermissionDto();
-                BeanUtils.copyProperties(permission, dto);
-                return dto;
-            }).collect(Collectors.toList());
-        }
-        return responseList;
+        return this.selectPermissionByUserId(userId);
     }
 
     /**

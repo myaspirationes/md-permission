@@ -1,7 +1,9 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetGroupDetailsDto;
+import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetGroupDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -20,6 +22,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +30,7 @@ import java.util.stream.Collectors;
  * @Date 14:45 2019/8/6
 **/
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserPermissionTargetGroupDetailsService {
 
     private static Logger logger = LoggerFactory.getLogger(UserPermissionTargetGroupDetailsService.class);
@@ -44,28 +47,26 @@ public class UserPermissionTargetGroupDetailsService {
      * @Date 10:23 2019/8/6
      **/
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public void updateUserPermissionTargetGroups(List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDtoList, Integer userId) {
-        logger.info("UserPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups userPermissionDetailsDtoList:{}", JsonUtils.obj2json(userPermissionTargetGroupDetailsDtoList));
+    public void updateUserPermissionTargetGroups(UserPermissionTargetDto userPermissionTargetDto) {
+        logger.info("UserPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups userPermissionDetailsDtoList:{}", JsonUtils.obj2json(userPermissionTargetDto));
         // 参数判断
-        if (userId == null) {
+        if (userPermissionTargetDto.getUserId() == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        // 先通过用户 id 查询用户权限表，获取用户权限表 ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        // 通过用户权限 ids 删除 用户管理目标集团 数据
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            Example example = new Example(UserPermissionTargetGroupDetails.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andIn("userPermissionId",userPermissionIds);
-            userPermissionTargetGroupDetailsMapper.deleteByExample(example);
+        UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
+        if (userPermissionDetails == null){
+            throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
         }
+        Example example = new Example(UserPermissionTargetGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId",userPermissionDetails.getId());
+        userPermissionTargetGroupDetailsMapper.deleteByExample(example);
         // 增加修改后的权限
-        if (!CollectionUtils.isEmpty(userPermissionTargetGroupDetailsDtoList)) {
-            userPermissionTargetGroupDetailsDtoList.stream()
+        if (!CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
+            userPermissionTargetDto.getTargetIds().stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionTargetGroupDetailsDto ->{
-                        return userPermissionTargetGroupDetailsMapper.insertSelective(new UserPermissionTargetGroupDetails(
-                                userPermissionTargetGroupDetailsDto.getUserPermissionId(), userPermissionTargetGroupDetailsDto.getGroupId()));
+                    .map(groupId ->{
+                        return userPermissionTargetGroupDetailsMapper.insertSelective(new UserPermissionTargetGroupDetails(userPermissionDetails.getId(), groupId));
                     }).count();
         }
     }
@@ -87,6 +88,32 @@ public class UserPermissionTargetGroupDetailsService {
                     .collect(Collectors.toList());
         }
         return groupsIds;
+    }
+
+    /**
+     * 通过用户权限 id 查询
+     *
+     * @param userPermissionId
+     * @return
+     */
+    public List<UserPermissionTargetGroupDetails> selectUserPermissionTargetGroupDetailsByUserPermissionId(Integer userPermissionId) {
+        Example example = new Example(UserPermissionTargetGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId", userPermissionId);
+        return userPermissionTargetGroupDetailsMapper.selectByExample(example);
+    }
+
+    /**
+     * 通过集团 id 查询
+     *
+     * @param groupId
+     * @return
+     */
+    public Integer selectUserPermissionTargetGroupDetailsCountByGroupId(Integer groupId) {
+        Example example = new Example(UserPermissionTargetGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("groupId",groupId);
+        return userPermissionTargetGroupDetailsMapper.selectCountByExample(example);
     }
 
     /**

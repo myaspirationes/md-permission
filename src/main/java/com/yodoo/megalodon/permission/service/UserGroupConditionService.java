@@ -12,7 +12,6 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @Description ：查询条件用户组关系表
@@ -20,7 +19,7 @@ import java.util.Set;
  * @Date ： 2019/8/8 0008
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserGroupConditionService {
 
     @Autowired

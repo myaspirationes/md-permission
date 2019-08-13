@@ -136,4 +136,28 @@ public interface BundleKey {
      **/
     String SEARCH_CONDITION_USE = PERMISSION_PREFIX + "MENU.USE";
     String SEARCH_CONDITION_USE_MSG = "查询条件还在使用，不能删除";
+
+    /**
+     * 集团已存在
+     */
+    String GROUPS_ALREADY_EXIST = PERMISSION_PREFIX + "GROUPS.ALREADY.EXIST";
+    String GROUPS_ALREADY_EXIST_MSG = "集团已经存在";
+
+    /**
+     * 集团不存在
+     **/
+    String GROUPS_NOT_EXIST = PERMISSION_PREFIX + "GROUPS.NOT.EXIST";
+    String GROUPS_NOT_EXIST_MSG = "集团不存在";
+
+    /**
+     * 公司已存在
+     */
+    String COMPANY_ALREADY_EXIST = PERMISSION_PREFIX + "COMPANY.ALREADY.EXIST";
+    String COMPANY_ALREADY_EXIST_MSG = "公司已经存在";
+
+    /**
+     * 公司不存在
+     **/
+    String COMPANY_NOT_EXIST = PERMISSION_PREFIX + "COMPANY.NOT.EXIST";
+    String COMPANY_NOT_EXIST_MSG = "公司不存在";
 }

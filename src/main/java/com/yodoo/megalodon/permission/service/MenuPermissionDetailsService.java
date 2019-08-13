@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * @Date 13:50 2019/8/7
 **/
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class MenuPermissionDetailsService {
 
     private static Logger logger = LoggerFactory.getLogger(MenuPermissionDetailsService.class);

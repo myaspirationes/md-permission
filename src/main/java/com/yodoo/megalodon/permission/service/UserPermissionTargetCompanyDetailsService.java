@@ -1,13 +1,15 @@
 package com.yodoo.megalodon.permission.service;
 
+import com.yodoo.feikongbao.provisioning.domain.system.dto.CompanyDto;
+import com.yodoo.feikongbao.provisioning.domain.system.entity.Company;
+import com.yodoo.feikongbao.provisioning.domain.system.mapper.CompanyMapper;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.CompanyDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetCompanyDetailsDto;
-import com.yodoo.megalodon.permission.entity.Company;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetDto;
+import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetCompanyDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
-import com.yodoo.megalodon.permission.mapper.CompanyMapper;
 import com.yodoo.megalodon.permission.mapper.UserPermissionTargetCompanyDetailsMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
  * @Date ： 2019/8/6 0006
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserPermissionTargetCompanyDetailsService {
 
     @Autowired
@@ -39,30 +41,28 @@ public class UserPermissionTargetCompanyDetailsService {
 
     /**
      * 更新用户管理目标公司数据
-     * @param userPermissionTargetCompanyDetailsDtoList
-     * @param userId
+     * @param userPermissionTargetDto
      */
-    public void updateUserPermissionTargetCompany(List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDtoList, Integer userId) {
+    public void updateUserPermissionTargetCompany(UserPermissionTargetDto userPermissionTargetDto) {
         // 参数判断
-        if (userId == null) {
+        if (userPermissionTargetDto.getUserId() == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        // 先通过用户 id 查询用户权限表，获取用户权限表 ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        // 通过用户权限 ids 删除 用户管理目标公司 数据
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            Example example = new Example(UserPermissionTargetCompanyDetails.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andIn("userPermissionId",userPermissionIds);
-            userPermissionTargetCompanyDetailsMapper.deleteByExample(example);
+        UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
+        if (userPermissionDetails == null){
+            throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
         }
+        // 通过用户权限 ids 删除 用户管理目标公司 数据
+        Example example = new Example(UserPermissionTargetCompanyDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId",userPermissionDetails.getId());
+        userPermissionTargetCompanyDetailsMapper.deleteByExample(example);
         // 增加修改后的权限
-        if (!CollectionUtils.isEmpty(userPermissionTargetCompanyDetailsDtoList)) {
-            userPermissionTargetCompanyDetailsDtoList.stream()
+        if (!CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
+            userPermissionTargetDto.getTargetIds().stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionTargetCompanyDetailsDto ->{
-                        return userPermissionTargetCompanyDetailsMapper.insertSelective(new UserPermissionTargetCompanyDetails(
-                                userPermissionTargetCompanyDetailsDto.getUserPermissionId(), userPermissionTargetCompanyDetailsDto.getCompanyId()));
+                    .map(companyId ->{
+                        return userPermissionTargetCompanyDetailsMapper.insertSelective(new UserPermissionTargetCompanyDetails(userPermissionDetails.getId(), companyId));
                     }).count();
         }
     }

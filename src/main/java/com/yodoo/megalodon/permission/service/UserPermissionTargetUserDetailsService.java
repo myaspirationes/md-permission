@@ -1,7 +1,9 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetUserDetailsDto;
+import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetUserDetails;
 import com.yodoo.megalodon.permission.exception.BundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
  * @Date ： 2019/8/6 0006
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class UserPermissionTargetUserDetailsService {
 
     @Autowired
@@ -35,30 +37,28 @@ public class UserPermissionTargetUserDetailsService {
 
     /**
      * 更新用户管理目标用户数据
-     * @param userPermissionTargetUserDetailsDtoList
-     * @param userId
+     * @param userPermissionTargetDto
      */
-    public void updateUserPermissionTargetUser(List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDtoList, Integer userId) {
+    public void updateUserPermissionTargetUser(UserPermissionTargetDto userPermissionTargetDto) {
         // 参数判断
-        if (userId == null) {
+        if (userPermissionTargetDto.getUserId() == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
-        // 先通过用户 id 查询用户权限表，获取用户权限表 ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        // 通过用户权限 ids 删除 用户管理目标用户 数据
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            Example example = new Example(UserPermissionTargetUserDetails.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andIn("userPermissionId",userPermissionIds);
-            userPermissionTargetUserDetailsMapper.deleteByExample(example);
+        UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
+        if (userPermissionDetails == null){
+            throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
         }
+        // 通过用户权限 ids 删除 用户管理目标用户 数据
+        Example example = new Example(UserPermissionTargetUserDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("userPermissionId", userPermissionDetails.getId());
+        userPermissionTargetUserDetailsMapper.deleteByExample(example);
         // 增加修改后的权限
-        if (!CollectionUtils.isEmpty(userPermissionTargetUserDetailsDtoList)) {
-            userPermissionTargetUserDetailsDtoList.stream()
+        if (!CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
+            userPermissionTargetDto.getTargetIds().stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionTargetUserDetailsDto ->{
-                        return userPermissionTargetUserDetailsMapper.insertSelective(new UserPermissionTargetUserDetails(
-                                userPermissionTargetUserDetailsDto.getUserPermissionId(), userPermissionTargetUserDetailsDto.getUserId()));
+                    .map(userId ->{
+                        return userPermissionTargetUserDetailsMapper.insertSelective(new UserPermissionTargetUserDetails(userPermissionDetails.getId(), userId));
                     }).count();
         }
     }

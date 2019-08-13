@@ -28,7 +28,7 @@ public class MenuManagerApi {
      * @Date 14:46 2019/8/8
     **/
     @PreAuthorize("hasAnyAuthority('permission_manage')")
-    public List<MenuDto> queryMenuTree(){
+    public List<MenuDto> getAllMenuTree(){
         return menuTreeService.getAllMenuTree();
     }
 
@@ -55,8 +55,8 @@ public class MenuManagerApi {
      * @Author houzhen
      * @Date 14:49 2019/8/8
     **/
-    public void deleteMenu(MenuDto menuDto) {
-        menuService.deleteMenu(menuDto);
+    public void deleteMenu(Integer id) {
+        menuService.deleteMenu(id);
     }
 
     /**

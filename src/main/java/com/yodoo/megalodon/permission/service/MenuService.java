@@ -24,7 +24,7 @@ import java.util.List;
  * @Date 13:50 2019/8/7
 **/
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class MenuService {
 
     private static Logger logger = LoggerFactory.getLogger(MenuService.class);
@@ -87,13 +87,13 @@ public class MenuService {
      * @Author houzhen
      * @Date 15:25 2019/8/7
     **/
-    public void deleteMenu(MenuDto menuDto) {
-        logger.info("MenuService#updateMenu menuDto:{}", JsonUtils.obj2json(menuDto));
-        if (menuDto.getId() == null) {
+    public void deleteMenu(Integer id) {
+        logger.info("MenuService#updateMenu menuDto:{}", JsonUtils.obj2json(id));
+        if (id == null) {
             throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
         }
         // 查询菜单
-        Menu menu = menuMapper.selectByPrimaryKey(menuDto.getId());
+        Menu menu = menuMapper.selectByPrimaryKey(id);
         if (menu == null) {
             throw new PermissionException(BundleKey.MENU_NOT_EXIST, BundleKey.MENU_NOT_EXIST_MSG);
         }

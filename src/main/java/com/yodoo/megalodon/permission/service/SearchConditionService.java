@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * @Date ： 2019/8/8 0008
  */
 @Service
-@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.TRANSACTION_MANAGER_BEAN_NAME)
+@Transactional(rollbackFor = Exception.class, transactionManager = PermissionConfig.PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
 public class SearchConditionService {
 
     @Autowired
@@ -116,6 +116,17 @@ public class SearchConditionService {
      */
     public SearchCondition selectByPrimaryKey(Integer id) {
         return searchConditionMapper.selectByPrimaryKey(id);
+    }
+
+    /**
+     * 查询所有条件列表
+     * @return
+     */
+    public List<SearchCondition> getAllSearchCondition() {
+        Example example = new Example(SearchCondition.class);
+        example.setOrderByClause("condition_name ASC");
+        Example.Criteria criteria = example.createCriteria();
+        return searchConditionMapper.selectByExample(example);
     }
 
     /**
