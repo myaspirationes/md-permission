@@ -14,4 +14,11 @@
     id, group_code, group_name, create_user, create_time, update_user, update_time
   </sql>
 
+    <select id="selectOtherThanOneself" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from user_group
+        where id != #{id,jdbcType=INTEGER} and group_code = #{groupCode,jdbcType=VARCHAR}
+    </select>
+
 </mapper>

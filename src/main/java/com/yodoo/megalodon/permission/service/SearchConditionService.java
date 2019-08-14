@@ -7,7 +7,7 @@ import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.SearchConditionMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -135,11 +135,11 @@ public class SearchConditionService {
      */
     private void deleteSearchConditionParameterCheck(Integer id) {
         if (id == null || id < 0){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<UserGroupCondition> userGroupConditions = userGroupConditionService.selectUserGroupConditionBySearchConditionId(id);
         if (!CollectionUtils.isEmpty(userGroupConditions)){
-            throw new PermissionException(BundleKey.SEARCH_CONDITION_USE, BundleKey.SEARCH_CONDITION_USE_MSG);
+            throw new PermissionException(PermissionBundleKey.SEARCH_CONDITION_USE, PermissionBundleKey.SEARCH_CONDITION_USE_MSG);
         }
     }
 
@@ -151,19 +151,19 @@ public class SearchConditionService {
     private SearchCondition editSearchConditionParameterCheck(SearchConditionDto searchConditionDto) {
         if (searchConditionDto == null || searchConditionDto.getId() == null || searchConditionDto.getId() < 0 ||
                 StringUtils.isBlank(searchConditionDto.getConditionCode()) || StringUtils.isBlank(searchConditionDto.getConditionName())){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         SearchCondition searchCondition = selectByPrimaryKey(searchConditionDto.getId());
         if (searchCondition == null){
-            throw new PermissionException(BundleKey.SEARCH_CONDITION_NOT_EXIST, BundleKey.SEARCH_CONDITION_NOT_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.SEARCH_CONDITION_NOT_EXIST, PermissionBundleKey.SEARCH_CONDITION_NOT_EXIST_MSG);
         }
         Example example = new Example(SearchCondition.class);
         Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("id",searchConditionDto.getId());
-        criteria.andNotEqualTo("conditionCode", searchConditionDto.getConditionCode());
+        criteria.andNotEqualTo("id",searchConditionDto.getId());
+        criteria.andEqualTo("conditionCode", searchConditionDto.getConditionCode());
         SearchCondition searchConditionResponse =  searchConditionMapper.selectOneByExample(example);
         if (searchConditionResponse != null){
-            throw new PermissionException(BundleKey.SEARCH_CONDITION_ALREADY_EXIST, BundleKey.SEARCH_CONDITION_ALREADY_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST, PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST_MSG);
         }
         return searchCondition;
     }
@@ -174,14 +174,33 @@ public class SearchConditionService {
      */
     private void addSearchConditionParameterCheck(SearchConditionDto searchConditionDto) {
         if (searchConditionDto == null || StringUtils.isBlank(searchConditionDto.getConditionCode()) || StringUtils.isBlank(searchConditionDto.getConditionName())){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         Example example = new Example(SearchCondition.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("conditionCode",searchConditionDto.getConditionCode());
         SearchCondition searchCondition =  searchConditionMapper.selectOneByExample(example);
         if (searchCondition != null){
-            throw new PermissionException(BundleKey.SEARCH_CONDITION_ALREADY_EXIST, BundleKey.SEARCH_CONDITION_ALREADY_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST, PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST_MSG);
         }
+    }
+
+    /**
+     * 查询不存在的数据
+     * @param searchConditionIds
+     * @return
+     */
+    public Long selectSearchConditionNoExistCountByIds(List<Integer> searchConditionIds) {
+        Long count = null;
+        if (!CollectionUtils.isEmpty(searchConditionIds)){
+            count = searchConditionIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(id -> {
+                        return selectByPrimaryKey(id);
+                    })
+                    .filter(searchCondition -> searchCondition == null)
+                    .count();
+        }
+        return count;
     }
 }

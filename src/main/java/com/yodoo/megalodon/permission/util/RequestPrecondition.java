@@ -2,7 +2,7 @@ package com.yodoo.megalodon.permission.util;
 
 
 import com.ctrip.framework.apollo.core.utils.StringUtils;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 
 /**
@@ -21,7 +21,7 @@ public class RequestPrecondition {
 
     public static void checkArguments(boolean expression) {
         if (!expression) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
     }
 }

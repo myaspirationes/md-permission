@@ -24,4 +24,14 @@
     status, create_user, create_time, update_user, update_time
   </sql>
 
+    <select id="selectUserNotInIds" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from user
+        where id NOT IN
+        <foreach item="item" index="index" collection="userIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

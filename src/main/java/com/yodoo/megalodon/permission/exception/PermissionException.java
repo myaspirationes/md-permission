@@ -5,9 +5,9 @@ package com.yodoo.megalodon.permission.exception;
  * @author  by houzhen
  */
 public class PermissionException extends RuntimeException {
-    private String messageBundleKey;
+    private String permissionMessageBundleKey;
 
-    private String[] messageParams;
+    private String[] permissionMessageParams;
 
     public PermissionException() {
         super();
@@ -15,27 +15,27 @@ public class PermissionException extends RuntimeException {
 
     public PermissionException(String messageBundleKey, String... messageParams) {
         super(messageBundleKey);
-        this.messageParams = messageParams;
-        this.messageBundleKey = messageBundleKey;
+        this.permissionMessageParams = messageParams;
+        this.permissionMessageBundleKey = messageBundleKey;
     }
 
     public PermissionException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public String getMessageBundleKey() {
-        return messageBundleKey;
+    public String getPermissionMessageBundleKey() {
+        return permissionMessageBundleKey;
     }
 
-    public void setMessageBundleKey(String messageBundleKey) {
-        this.messageBundleKey = messageBundleKey;
+    public void setPermissionMessageBundleKey(String permissionMessageBundleKey) {
+        this.permissionMessageBundleKey = permissionMessageBundleKey;
     }
 
-    public String[] getMessageParams() {
-        return messageParams;
+    public String[] getPermissionMessageParams() {
+        return permissionMessageParams;
     }
 
-    public void setMessageParams(String[] messageParams) {
-        this.messageParams = messageParams;
+    public void setPermissionMessageParams(String[] permissionMessageParams) {
+        this.permissionMessageParams = permissionMessageParams;
     }
 }

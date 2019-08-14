@@ -10,11 +10,12 @@ import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
+import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
 import com.yodoo.megalodon.permission.enums.UserStatusEnum;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserMapper;
 import com.yodoo.megalodon.permission.util.Md5Util;
@@ -147,7 +148,6 @@ public class UserService {
         user.setStatus(UserStatusEnum.USE.getCode());
         user.setPassword(Md5Util.md5Encode(PermissionConstants.DEFAULT_PASSWORD));
         Integer insertUserResponseCount = userMapper.insertSelective(user);
-
         // 更新用户组表与用户关系表
         if (insertUserResponseCount != null && insertUserResponseCount > 0){
             updateUserGroup(user.getId(), userDto.getUserGroupIds());
@@ -181,7 +181,7 @@ public class UserService {
      */
     public Integer resetUserPassword(Integer id) {
         if (id == null || id < 0){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         User user = checkUserExistById(id);
         user.setPassword(Md5Util.md5Encode(PermissionConstants.DEFAULT_PASSWORD));
@@ -195,7 +195,7 @@ public class UserService {
      */
     public Integer updateUserStatus(Integer id, Integer status) {
         if (id == null || id < 0 || !Arrays.asList(UserStatusEnum.USE.getCode(), UserStatusEnum.STOP.getCode()).contains(status)){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         User user = checkUserExistById(id);
         user.setStatus(status);
@@ -211,7 +211,7 @@ public class UserService {
     public List<GroupsDto> getTargetGroupsByUserId(Integer userId) {
         logger.info("UserPermissionTargetGroupDetailsService.getTargetGroupsByUserId userId:{}", userId);
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<GroupsDto> groupsDtoList = new ArrayList<>();
         // 通过用户id 查询用户权限表，获取用户权限表id
@@ -248,7 +248,7 @@ public class UserService {
         logger.info("UserPermissionTargetGroupDetailsService.getAvailableGroupsByUserId userId:{}", userId);
         List<GroupsDto> responseList = new ArrayList<>();
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 公司 ids
         Set<Integer> groupsIdsListSet = new HashSet<>();
@@ -263,11 +263,13 @@ public class UserService {
                         return userPermissionTargetGroupDetailsService.getGroupIdsByUserPermissionId(userPermissionId);
                     })
                     .filter(Objects::nonNull)
+                    .filter(list -> list != null && list.size() > 0)
                     .collect(Collectors.toList());
             // 整合公司ids
             if (!CollectionUtils.isEmpty(groupsIdsList)){
                 groupsIdsList.stream()
                         .filter(Objects::nonNull)
+                        .filter(list -> list != null && list.size() > 0)
                         .forEach(groupsIds -> {
                             groupsIdsListSet.addAll(groupsIds);
                         });
@@ -283,7 +285,7 @@ public class UserService {
      */
     public List<CompanyDto> getUserManageTargetCompanyListByUserId(Integer userId){
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<CompanyDto> companyDtoList = new ArrayList<>();
         // 通过用户id 查询用户权限表，获取用户权限表id
@@ -318,7 +320,7 @@ public class UserService {
      */
     public List<CompanyDto> getAvailableUserManageTargetCompanyListByUserId(Integer userId){
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 公司 ids
         Set<Integer> companyIdsListSet = new HashSet<>();
@@ -333,6 +335,7 @@ public class UserService {
                         return userPermissionTargetCompanyDetailsService.getCompanyIdsByUserPermissionId(userPermissionId);
                     })
                     .filter(Objects::nonNull)
+                    .filter(list -> list != null && list.size() > 0)
                     .collect(Collectors.toList());
             // 整合公司ids
             if (!CollectionUtils.isEmpty(companyIdsList)){
@@ -353,7 +356,7 @@ public class UserService {
      */
     public List<UserDto> selectUserManageTargetUserListByUserId(Integer userId){
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<UserDto> userDtoList = new ArrayList<>();
         // 通过用户id 查询用户权限表，获取用户权限表id
@@ -388,7 +391,7 @@ public class UserService {
      */
     public List<UserDto> getAvailableUserManageTargetUserListByUserId(Integer userId){
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 用户 ids
         Set<Integer> userIdsListSet = new HashSet<>();
@@ -403,6 +406,7 @@ public class UserService {
                         return userPermissionTargetUserDetailsService.getUserIdsByUserPermissionId(userPermissionId);
                     })
                     .filter(Objects::nonNull)
+                    .filter(list -> list != null && list.size() > 0)
                     .collect(Collectors.toList());
             // 整合用户 ids
             if (!CollectionUtils.isEmpty(userIdsList)){
@@ -421,7 +425,7 @@ public class UserService {
      * @param searchConditionDtoList
      * @return
      */
-    public List<User> selectUserListByCondition(List<SearchConditionDto> searchConditionDtoList) {
+    public List<User> selectUserListByCondition(List<SearchCondition> searchConditionList) {
         List<User> list = new ArrayList<>();
         return list;
     }
@@ -441,11 +445,19 @@ public class UserService {
      * @return
      */
     private List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
+
         if (!CollectionUtils.isEmpty(userIdsListSet)){
-            Example example = new Example(User.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andNotIn("id",userIdsListSet);
-            return getUserDtoByExample(example);
+           List<User> userList = userMapper.selectUserNotInIds(userIdsListSet);
+           if (!CollectionUtils.isEmpty(userList)){
+               return userList.stream()
+                       .filter(Objects::nonNull)
+                       .map(user -> {
+                           UserDto userDto = new UserDto();
+                           BeanUtils.copyProperties(user,userDto);
+                           return userDto;
+                       }).filter(Objects::nonNull)
+                       .collect(Collectors.toList());
+           }
         }
         return null;
     }
@@ -581,18 +593,16 @@ public class UserService {
     private void addUserParameterCheck(UserDto userDto) {
         if (userDto == null || org.apache.commons.lang3.StringUtils.isBlank(userDto.getAccount()) || org.apache.commons.lang3.StringUtils.isBlank(userDto.getName())
                 || org.apache.commons.lang3.StringUtils.isBlank(userDto.getEmail()) || org.apache.commons.lang3.StringUtils.isBlank(userDto.getPhone())){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 邮件和电话校验,权限，权限组，权限
         parameterCheck(userDto);
-
         // 账号是否存在
-        Example example = new Example(User.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("account", userDto.getAccount());
-        User userByAccount = userMapper.selectOneByExample(example);
-        if (userByAccount != null){
-            throw new PermissionException(BundleKey.USER_ALREADY_EXIST, BundleKey.USER_ALREADY_EXIST_MSG);
+        User user = new User();
+        user.setAccount(userDto.getAccount());
+        User userResponse = userMapper.selectOne(user);
+        if (userResponse != null){
+            throw new PermissionException(PermissionBundleKey.USER_ALREADY_EXIST, PermissionBundleKey.USER_ALREADY_EXIST_MSG);
         }
     }
 
@@ -604,7 +614,7 @@ public class UserService {
     private User editUserParameterCheck(UserDto userDto) {
         if (userDto == null || userDto.getId() == null || userDto.getId() < 0 || org.apache.commons.lang3.StringUtils.isBlank(userDto.getName())
                 || org.apache.commons.lang3.StringUtils.isBlank(userDto.getEmail()) || org.apache.commons.lang3.StringUtils.isBlank(userDto.getPhone())){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
 
         // 邮件、电话、性别、用户组、权限校验
@@ -622,7 +632,7 @@ public class UserService {
     private User checkUserExistById(Integer id) {
         User user = selectByPrimaryKey(id);
         if (user == null){
-            throw new PermissionException(BundleKey.USER_NOT_EXIST, BundleKey.USER_NOT_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.USER_NOT_EXIST, PermissionBundleKey.USER_NOT_EXIST_MSG);
         }
         return user;
     }
@@ -634,24 +644,24 @@ public class UserService {
     private void parameterCheck(UserDto userDto) {
         // 性别校验
         if (userDto.getSex() != null && !Arrays.asList(UserSexEnum.MAN.getCode(), UserSexEnum.GIRL.getCode(), UserSexEnum.SEXLESS.getCode()).contains(userDto.getSex())){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
 
         // 邮件是否正确
         if (!Pattern.compile(PermissionConstants.EMAIL_SERVER_MAILBOX_REGULAR_EXPRESSION).matcher(userDto.getEmail()).matches()){
-            throw new PermissionException(BundleKey.EMAIL_FORMAT_ERROR, BundleKey.EMAIL_FORMAT_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.EMAIL_FORMAT_ERROR, PermissionBundleKey.EMAIL_FORMAT_ERROR_MSG);
         }
 
         // 电话号码是否正确
         if (userDto.getPhone().length() != PermissionConstants.PHONE_LENGTH){
-            throw new PermissionException(BundleKey.PHONE_FORMAT_ERROR, BundleKey.PHONE_FORMAT_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PHONE_FORMAT_ERROR, PermissionBundleKey.PHONE_FORMAT_ERROR_MSG);
         }
 
         // 如果用户组不为空,查询用户组不存在，不操作
         if (!CollectionUtils.isEmpty(userDto.getUserGroupIds())){
             Long userGroupNoExistCount = userGroupService.selectUserGroupNoExistCountByIds(userDto.getUserGroupIds());
             if (userGroupNoExistCount != null && userGroupNoExistCount > 0){
-                throw new PermissionException(BundleKey.USER_GROUP_NOT_EXIST, BundleKey.USER_GROUP_NOT_EXIST_MSG);
+                throw new PermissionException(PermissionBundleKey.USER_GROUP_NOT_EXIST, PermissionBundleKey.USER_GROUP_NOT_EXIST_MSG);
             }
         }
     }

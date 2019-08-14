@@ -6,7 +6,7 @@ import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.PermissionGroupDto;
 import com.yodoo.megalodon.permission.entity.PermissionGroup;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.PermissionGroupMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -100,7 +100,7 @@ public class PermissionGroupService {
      */
     private void updatePermissionGroupDetails(Integer permissionGroupId, Set<Integer> permissionIds) {
         if (permissionGroupId != null && permissionGroupId > 0){
-            permissionGroupDetailsService.deleteByPrimaryKey(permissionGroupId);
+            permissionGroupDetailsService.deleteByPermissionGroupId(permissionGroupId);
         }
         if (permissionGroupId != null && permissionGroupId > 0 && !CollectionUtils.isEmpty(permissionIds)){
             permissionGroupDetailsService.insertPermissionGroupDetails(permissionGroupId, permissionIds);
@@ -135,7 +135,11 @@ public class PermissionGroupService {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public Integer deletePermissionGroup(Integer id) {
         deletePermissionGroupParameterCheck(id);
-        return permissionGroupMapper.deleteByPrimaryKey(id);
+        Integer deleteCount = permissionGroupMapper.deleteByPrimaryKey(id);
+        if (deleteCount != null && deleteCount > 0){
+            permissionGroupDetailsService.deleteByPermissionGroupId(id);
+        }
+        return deleteCount;
     }
 
     /**
@@ -163,12 +167,12 @@ public class PermissionGroupService {
     private PermissionGroup editPermissionGroupParameterCheck(PermissionGroupDto permissionGroupDto) {
         if (permissionGroupDto == null || permissionGroupDto.getId() == null || permissionGroupDto.getId() < 0
                 || StringUtils.isBlank(permissionGroupDto.getGroupCode()) || StringUtils.isBlank(permissionGroupDto.getGroupName())) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 不存在不能修改
         PermissionGroup permissionGroup = selectByPrimaryKey(permissionGroupDto.getId());
         if (permissionGroup == null) {
-            throw new PermissionException(BundleKey.PERMISSION_GROUP_NOT_EXIST, BundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.PERMISSION_GROUP_NOT_EXIST, PermissionBundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
         }
 
         Example example = new Example(PermissionGroup.class);
@@ -177,14 +181,14 @@ public class PermissionGroupService {
         criteria.andEqualTo("groupCode", permissionGroupDto.getGroupCode());
         PermissionGroup permissionGroupSelf = permissionGroupMapper.selectOneByExample(example);
         if (permissionGroupSelf != null) {
-            throw new PermissionException(BundleKey.PERMISSION_GROUP_ALREADY_EXIST, BundleKey.PERMISSION_GROUP_ALREADY_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.PERMISSION_GROUP_ALREADY_EXIST, PermissionBundleKey.PERMISSION_GROUP_ALREADY_EXIST_MSG);
         }
 
         // 如果权限ids 不为空，查不存在的数量
         if (!CollectionUtils.isEmpty(permissionGroupDto.getPermissionIds())){
             Long permissionNoExistCount = permissionService.selectPermissionNoExistCountByIds(permissionGroupDto.getPermissionIds());
             if (permissionNoExistCount != null && permissionNoExistCount > 0){
-                throw new PermissionException(BundleKey.PERMISSION_NOT_EXIST, BundleKey.PERMISSION_NOT_EXIST_MSG);
+                throw new PermissionException(PermissionBundleKey.PERMISSION_NOT_EXIST, PermissionBundleKey.PERMISSION_NOT_EXIST_MSG);
             }
         }
 
@@ -211,7 +215,7 @@ public class PermissionGroupService {
      */
     private void addPermissionGroupParameterCheck(PermissionGroupDto permissionGroupDto) {
         if (permissionGroupDto == null || StringUtils.isBlank(permissionGroupDto.getGroupCode()) || StringUtils.isBlank(permissionGroupDto.getGroupName())) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 查询是否有相同的数据，有不添加
         Example example = new Example(PermissionGroup.class);
@@ -219,13 +223,13 @@ public class PermissionGroupService {
         criteria.andEqualTo("groupCode", permissionGroupDto.getGroupCode());
         PermissionGroup permissionGroup = permissionGroupMapper.selectOneByExample(example);
         if (permissionGroup != null) {
-            throw new PermissionException(BundleKey.PERMISSION_GROUP_ALREADY_EXIST, BundleKey.PERMISSION_GROUP_ALREADY_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.PERMISSION_GROUP_ALREADY_EXIST, PermissionBundleKey.PERMISSION_GROUP_ALREADY_EXIST_MSG);
         }
         // 如果权限ids 不为空，查不存在的数量
         if (!CollectionUtils.isEmpty(permissionGroupDto.getPermissionIds())){
             Long permissionNoExistCount = permissionService.selectPermissionNoExistCountByIds(permissionGroupDto.getPermissionIds());
             if (permissionNoExistCount != null && permissionNoExistCount > 0){
-                throw new PermissionException(BundleKey.PERMISSION_NOT_EXIST, BundleKey.PERMISSION_NOT_EXIST_MSG);
+                throw new PermissionException(PermissionBundleKey.PERMISSION_NOT_EXIST, PermissionBundleKey.PERMISSION_NOT_EXIST_MSG);
             }
         }
     }
@@ -241,21 +245,16 @@ public class PermissionGroupService {
      */
     private void deletePermissionGroupParameterCheck(Integer id) {
         if (id == null || id < 0) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         PermissionGroup permissionGroup = selectByPrimaryKey(id);
         if (permissionGroup == null) {
-            throw new PermissionException(BundleKey.PERMISSION_GROUP_NOT_EXIST, BundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
-        }
-        // 查询权限组明细，如果存在使用，不能删除
-        Integer permissionGroupDetailsCount = permissionGroupDetailsService.selectPermissionGroupDetailsCountByPermissionGroupId(id);
-        if (permissionGroupDetailsCount != null && permissionGroupDetailsCount > 0) {
-            throw new PermissionException(BundleKey.THE_DATA_IS_STILL_IN_USE, BundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
+            throw new PermissionException(PermissionBundleKey.PERMISSION_GROUP_NOT_EXIST, PermissionBundleKey.PERMISSION_GROUP_NOT_EXIST_MSG);
         }
         // 查询用户组权限组关系表，如果存在使用不能删除
         Integer userGroupPermissionDetailsCount = userGroupPermissionDetailsService.selectUserGroupPermissionDetailsCountByPermissionGroupId(id);
         if (userGroupPermissionDetailsCount != null && userGroupPermissionDetailsCount > 0) {
-            throw new PermissionException(BundleKey.THE_DATA_IS_STILL_IN_USE, BundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
+            throw new PermissionException(PermissionBundleKey.THE_DATA_IS_STILL_IN_USE, PermissionBundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
         }
     }
 

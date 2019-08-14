@@ -3,7 +3,7 @@ package com.yodoo.megalodon.permission.service;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.*;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserPermissionDetailsMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
@@ -125,7 +125,7 @@ public class UserPermissionDetailsService {
         logger.info("UserPermissionDetailsService.updateUserPermission userGroupId : {},userIds:{},permissionIds:{}", userGroupId,JsonUtils.obj2json(userIds),JsonUtils.obj2json(permissionIds));
         // 参数判断
         if (userGroupId == null && userGroupId < 0) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 删除用户权限表数据
         if (!CollectionUtils.isEmpty(userIds)){

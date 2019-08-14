@@ -8,7 +8,7 @@ import com.yodoo.megalodon.permission.dto.UserPermissionTargetCompanyDetailsDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetDto;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetCompanyDetails;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserPermissionTargetCompanyDetailsMapper;
 import org.springframework.beans.BeanUtils;
@@ -46,11 +46,11 @@ public class UserPermissionTargetCompanyDetailsService {
     public void updateUserPermissionTargetCompany(UserPermissionTargetDto userPermissionTargetDto) {
         // 参数判断
         if (userPermissionTargetDto.getUserId() == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
         if (userPermissionDetails == null){
-            throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.USER_PERMISSION_NOT_EXIST, PermissionBundleKey.USER_PERMISSION_NOT_EXIST_MSG);
         }
         // 通过用户权限 ids 删除 用户管理目标公司 数据
         Example example = new Example(UserPermissionTargetCompanyDetails.class);
@@ -76,16 +76,13 @@ public class UserPermissionTargetCompanyDetailsService {
         List<CompanyDto> companyDtoList = new ArrayList<>();
 
         if (!CollectionUtils.isEmpty(companyIdsListSet)){
-            Example example = new Example(Company.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andNotIn("id",companyIdsListSet);
-            List<Company> companies = companyMapper.selectByExample(example);
+            List<Company> companies = companyMapper.selectCompanyNotInIds(companyIdsListSet);
             if (!CollectionUtils.isEmpty(companies)){
                 companyDtoList = companies.stream()
                         .filter(Objects::nonNull)
                         .map(company -> {
                             CompanyDto companyDto = new CompanyDto();
-                            BeanUtils.copyProperties(companies, companyDto);
+                            BeanUtils.copyProperties(company, companyDto);
                             return companyDto;
                         })
                         .filter(Objects::nonNull)
@@ -107,7 +104,7 @@ public class UserPermissionTargetCompanyDetailsService {
         Company company = companyMapper.selectOneByExample(example);
         if (company != null){
             CompanyDto companyDto = new CompanyDto();
-            BeanUtils.copyProperties(companyDto, company);
+            BeanUtils.copyProperties(company, companyDto);
             return companyDto;
         }
         return null;

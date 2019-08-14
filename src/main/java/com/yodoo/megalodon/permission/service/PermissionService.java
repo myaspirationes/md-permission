@@ -8,7 +8,7 @@ import com.yodoo.megalodon.permission.dto.PermissionDto;
 import com.yodoo.megalodon.permission.entity.Permission;
 import com.yodoo.megalodon.permission.entity.PermissionGroupDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.PermissionMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
@@ -92,7 +92,7 @@ public class PermissionService {
         // 查询code是否存在
         Permission permission = this.getPermissionByCode(permissionDto.getPermissionCode());
         if (permission != null) {
-            throw new PermissionException(BundleKey.PERMISSION_EXIST, BundleKey.PERMISSION_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.PERMISSION_EXIST, PermissionBundleKey.PERMISSION_EXIST_MSG);
         }
         permission = new Permission();
         BeanUtils.copyProperties(permissionDto, permission);
@@ -109,12 +109,23 @@ public class PermissionService {
         logger.info("PermissionService.updatePermission permissionDto:{}", JsonUtils.obj2json(permissionDto));
         // 检验参数
         RequestPrecondition.checkArgumentsNotEmpty(permissionDto.getPermissionCode(), permissionDto.getPermissionName());
-        Permission permission = this.getPermissionByCode(permissionDto.getPermissionCode());
-        if (permission == null) {
-            throw new PermissionException(BundleKey.PERMISSION_NOT_EXIST, BundleKey.PERMISSION_NOT_EXIST_MSG);
+        if (permissionDto.getId() == null || permissionDto.getId() < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        permission.setPermissionName(permission.getPermissionName());
-        return permissionMapper.updateByPrimaryKeySelective(permission);
+        Permission permissionById = permissionMapper.selectByPrimaryKey(permissionDto.getId());
+        if (permissionById == null){
+            throw new PermissionException(PermissionBundleKey.PERMISSION_NOT_EXIST, PermissionBundleKey.PERMISSION_NOT_EXIST_MSG);
+        }
+        Example example = new Example(Permission.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andNotEqualTo("id", permissionDto.getId());
+        criteria.andEqualTo("permissionCode", permissionDto.getPermissionCode());
+        Permission permissionByPermissionCode = permissionMapper.selectOneByExample(example);
+        if (permissionByPermissionCode != null) {
+            throw new PermissionException(PermissionBundleKey.PERMISSION_EXIST, PermissionBundleKey.PERMISSION_EXIST_MSG);
+        }
+        BeanUtils.copyProperties(permissionDto, permissionById);
+        return permissionMapper.updateByPrimaryKeySelective(permissionById);
     }
 
     /**
@@ -133,13 +144,8 @@ public class PermissionService {
      * @Author houzhen
      * @Date 17:21 2019/8/5
     **/
-    @PreAuthorize("hasAnyAuthority('permission_manage')")
     public List<Permission> getPermissionByUserId(Integer userId) {
         logger.info("PermissionService.getPermissionByUserId userId:{}", userId);
-        List<PermissionDto> responseList = new ArrayList<>();
-        if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
-        }
         return this.selectPermissionByUserId(userId);
     }
 
@@ -152,7 +158,7 @@ public class PermissionService {
         logger.info("PermissionService.getAvailablePermissionByUserId userId:{}", userId);
         List<PermissionDto> responseList = new ArrayList<>();
         if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<Permission> permissionList = this.selectPermissionByUserId(userId);
         List<Permission> availablePermissionList = new ArrayList<>();
@@ -182,12 +188,12 @@ public class PermissionService {
      */
     private void deleteParameterCheck(Integer permissionId) {
         if (permissionId == null || permissionId < 0){
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByPermissionId(permissionId);
         List<PermissionGroupDetails> permissionGroupDetailsList = permissionGroupDetailsService.selectPermissionGroupDetailsByPermissionId(permissionId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList) || !CollectionUtils.isEmpty(permissionGroupDetailsList)){
-            throw new PermissionException(BundleKey.THE_DATA_IS_STILL_IN_USE, BundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
+            throw new PermissionException(PermissionBundleKey.THE_DATA_IS_STILL_IN_USE, PermissionBundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
         }
     }
 
@@ -202,20 +208,18 @@ public class PermissionService {
     }
 
     public List<Permission> selectPermissionByUserId(Integer userId) {
-        List<Permission> responseList = new ArrayList<>();
-        if (userId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+        if (userId == null || userId < 0) {
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)) {
-            List<Integer> permissionIdList = userPermissionDetailsList.stream().map(UserPermissionDetails::getId).collect(Collectors.toList());
-            Example permissionExa = new Example(Permission.class);
-            Example.Criteria permissionCri = permissionExa.createCriteria();
-            permissionCri.andIn("permissionId", permissionIdList);
-            permissionExa.and(permissionCri);
-            responseList = permissionMapper.selectByExample(permissionCri);
+            return userPermissionDetailsList.stream()
+                    .filter(Objects::nonNull)
+                    .map(userPermissionDetails -> {
+                        return permissionMapper.selectByPrimaryKey(userPermissionDetails.getPermissionId());
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
         }
-        return responseList;
+        return null;
     }
 
     /**

@@ -2,7 +2,7 @@ package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.entity.MenuPermissionDetails;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.MenuPermissionDetailsMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
@@ -15,6 +15,7 @@ import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -39,18 +40,19 @@ public class MenuPermissionDetailsService {
         logger.info("MenuPermissionDetailsService#updateMenuPermission permissionIdList:{}, menuId:{}",
                 JsonUtils.obj2json(permissionIdList), menuId);
         if (menuId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 删除菜单权限
         this.deleteMenuPermission(menuId);
         if (!CollectionUtils.isEmpty(permissionIdList)) {
-            List<MenuPermissionDetails> addList = permissionIdList.stream().map(permissionId -> {
-                MenuPermissionDetails menuPermissionDetails = new MenuPermissionDetails();
-                menuPermissionDetails.setMenuId(menuId);
-                menuPermissionDetails.setPermissionId(permissionId);
-                return menuPermissionDetails;
-            }).collect(Collectors.toList());
-            menuPermissionDetailsMapper.insertList(addList);
+            permissionIdList.stream()
+                    .filter(Objects::nonNull)
+                    .map(permissionId -> {
+                        MenuPermissionDetails menuPermissionDetails = new MenuPermissionDetails();
+                        menuPermissionDetails.setMenuId(menuId);
+                        menuPermissionDetails.setPermissionId(permissionId);
+                        return menuPermissionDetailsMapper.insertSelective(menuPermissionDetails);
+                    }).collect(Collectors.toList());
         }
     }
 
@@ -62,7 +64,7 @@ public class MenuPermissionDetailsService {
     public void deleteMenuPermission(Integer menuId) {
         logger.info("MenuPermissionDetailsService#deleteMenuPermission menuId:{}", menuId);
         if (menuId == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         Example example = new Example(MenuPermissionDetails.class);
         Example.Criteria criteria = example.createCriteria();

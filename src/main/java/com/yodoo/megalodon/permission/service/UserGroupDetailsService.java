@@ -34,9 +34,10 @@ public class UserGroupDetailsService {
      */
     public Integer deleteUserGroupByUserId(Integer userId) {
         if (userId != null && userId > 0){
-            UserGroupDetails userGroupDetails = new UserGroupDetails();
-            userGroupDetails.setUserId(userId);
-            return userGroupDetailsMapper.delete(userGroupDetails);
+            Example example = new Example(UserGroupDetails.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andEqualTo("userId", userId);
+            return userGroupDetailsMapper.deleteByExample(example);
         }
         return null;
     }

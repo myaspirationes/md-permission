@@ -84,6 +84,18 @@ public class PermissionGroupDetailsService {
         return permissionGroupDetailsMapper.deleteByPrimaryKey(permissionGroupId);
     }
 
+    /**
+     * 通过权限组id删除
+     * @param permissionGroupId
+     */
+    public void deleteByPermissionGroupId(Integer permissionGroupId) {
+        Example example = new Example(PermissionGroupDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("permissionGroupId", permissionGroupId);
+        permissionGroupDetailsMapper.deleteByExample(example);
+
+    }
+
     public void insertPermissionGroupDetails(Integer permissionGroupId, Set<Integer> permissionIds){
         if (permissionGroupId != null && permissionGroupId > 0 && !CollectionUtils.isEmpty(permissionIds)){
             permissionIds.stream()

@@ -35,9 +35,9 @@ public class UserGroupDto extends BaseDto {
     private Set<Integer> permissionGroupIds;
 
     /**
-     * 查询条件 List
+     * 查询条件 ids
      */
-    private List<SearchConditionDto> searchConditionDtoList;
+    private List<Integer> searchConditionIds;
 
     public String getGroupCode() {
         return groupCode;
@@ -75,12 +75,12 @@ public class UserGroupDto extends BaseDto {
         return this;
     }
 
-    public List<SearchConditionDto> getSearchConditionDtoList() {
-        return searchConditionDtoList;
+    public List<Integer> getSearchConditionIds() {
+        return searchConditionIds;
     }
 
-    public UserGroupDto setSearchConditionDtoList(List<SearchConditionDto> searchConditionDtoList) {
-        this.searchConditionDtoList = searchConditionDtoList;
+    public UserGroupDto setSearchConditionIds(List<Integer> searchConditionIds) {
+        this.searchConditionIds = searchConditionIds;
         return this;
     }
 }

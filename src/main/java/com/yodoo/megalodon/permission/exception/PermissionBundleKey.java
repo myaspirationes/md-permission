@@ -4,7 +4,7 @@ package com.yodoo.megalodon.permission.exception;
  * @Date 2019/6/10 20:03
  * @author  by houzhen
  */
-public interface BundleKey {
+public interface PermissionBundleKey {
 
     /**
      * permission系统前缀

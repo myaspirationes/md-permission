@@ -88,7 +88,6 @@ public class UserManagerApi {
      * @param account
      * @return
      */
-    @PreAuthorize("hasAnyAuthority('user_manage')")
     public User getUserByAccount(String account){
         return userService.getUserByAccount(account);
     }

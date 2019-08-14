@@ -5,7 +5,7 @@ import com.yodoo.megalodon.permission.dto.UserPermissionTargetDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetGroupDetailsDto;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.entity.UserPermissionTargetGroupDetails;
-import com.yodoo.megalodon.permission.exception.BundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserPermissionTargetGroupDetailsMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
@@ -22,7 +22,6 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,11 +50,11 @@ public class UserPermissionTargetGroupDetailsService {
         logger.info("UserPermissionTargetGroupDetailsService.updateUserPermissionTargetGroups userPermissionDetailsDtoList:{}", JsonUtils.obj2json(userPermissionTargetDto));
         // 参数判断
         if (userPermissionTargetDto.getUserId() == null) {
-            throw new PermissionException(BundleKey.PARAMS_ERROR, BundleKey.PARAMS_ERROR_MSG);
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
         if (userPermissionDetails == null){
-            throw new PermissionException(BundleKey.USER_PERMISSION_NOT_EXIST, BundleKey.USER_PERMISSION_NOT_EXIST_MSG);
+            throw new PermissionException(PermissionBundleKey.USER_PERMISSION_NOT_EXIST, PermissionBundleKey.USER_PERMISSION_NOT_EXIST_MSG);
         }
         Example example = new Example(UserPermissionTargetGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();

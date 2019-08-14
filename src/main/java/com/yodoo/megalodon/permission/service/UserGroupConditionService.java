@@ -2,6 +2,7 @@ package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.SearchConditionDto;
+import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.mapper.UserGroupConditionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class UserGroupConditionService {
     @Autowired
     private UserGroupConditionMapper userGroupConditionMapper;
 
+    @Autowired
+    private SearchConditionService searchConditionService;
+
     /**
      * 通过查询条件id查询
      * @param searchConditionId
@@ -40,23 +44,23 @@ public class UserGroupConditionService {
     /**
      * 更新用户组时，更新用户组条件表
      * @param userGroupId
-     * @param searchConditionDtoList
+     * @param searchConditionList
      */
-    public void updateUserGroupCondition(Integer userGroupId, List<SearchConditionDto> searchConditionDtoList) {
+    public void updateUserGroupCondition(Integer userGroupId, List<SearchCondition> searchConditionList) {
         // 删除
         if (userGroupId != null && userGroupId > 0){
             deleteUserGroupConditionByUserGroupId(userGroupId);
         }
         // 插入
-        if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(searchConditionDtoList)){
-            searchConditionDtoList.stream()
+        if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(searchConditionList)){
+            searchConditionList.stream()
                     .filter(Objects::nonNull)
-                    .map(conditionDto -> {
+                    .map(searchCondition -> {
                         UserGroupCondition userGroupCondition = new UserGroupCondition();
                         userGroupCondition.setUserGroupId(userGroupId);
-                        userGroupCondition.setSearchConditionId(conditionDto.getId());
-                        userGroupCondition.setOperator(conditionDto.getConditionCode());
-                        userGroupCondition.setMatchValue(conditionDto.getConditionName());
+                        userGroupCondition.setSearchConditionId(searchCondition.getId());
+                        userGroupCondition.setOperator(searchCondition.getConditionCode());
+                        userGroupCondition.setMatchValue(searchCondition.getConditionName());
                         return userGroupConditionMapper.insertSelective(userGroupCondition);
                     }).filter(Objects::nonNull).count();
         }

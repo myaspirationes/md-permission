@@ -189,7 +189,6 @@ public class PermissionManagerApi {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasAnyAuthority('permission_manage')")
     public List<Permission> getPermissionByUserId(Integer userId) {
         return permissionService.getPermissionByUserId(userId);
     }

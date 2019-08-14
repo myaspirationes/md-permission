@@ -1,5 +1,6 @@
 package com.yodoo.megalodon.permission.api;
 
+import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.dto.MenuDto;
 import com.yodoo.megalodon.permission.service.MenuService;
 import com.yodoo.megalodon.permission.service.MenuTreeService;
@@ -21,6 +22,16 @@ public class MenuManagerApi {
 
     @Autowired
     private MenuService menuService;
+
+    /**
+     * 条件分页查询菜单
+     * @param menuDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('permission_manage')")
+    public PageInfoDto<MenuDto> queryMenuList(MenuDto menuDto){
+        return menuService.queryMenuList(menuDto);
+    }
 
     /**
      * 查询菜单树
