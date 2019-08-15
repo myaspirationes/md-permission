@@ -77,4 +77,15 @@ public class UserGroupConditionService {
         criteria.andEqualTo("userGroupId", userGroupId);
         return userGroupConditionMapper.deleteByExample(example);
     }
+
+    /**
+     * 通过用户组id 查询
+     * @param userGroupId
+     * @return
+     */
+    public List<UserGroupCondition> selectUserGroupConditionByUserGroupId(Integer userGroupId){
+        UserGroupCondition userGroupCondition = new UserGroupCondition();
+        userGroupCondition.setUserGroupId(userGroupId);
+        return userGroupConditionMapper.select(userGroupCondition);
+    }
 }

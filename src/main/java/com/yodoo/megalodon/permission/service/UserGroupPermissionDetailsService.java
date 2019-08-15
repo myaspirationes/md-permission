@@ -8,6 +8,8 @@ import com.yodoo.megalodon.permission.dto.PermissionGroupDto;
 import com.yodoo.megalodon.permission.dto.UserGroupPermissionDetailsDto;
 import com.yodoo.megalodon.permission.entity.PermissionGroup;
 import com.yodoo.megalodon.permission.entity.UserGroupPermissionDetails;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserGroupPermissionDetailsMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,6 +146,31 @@ public class UserGroupPermissionDetailsService {
     public Integer deleteUserGroupPermissionDetailsByUserGroupId(Integer userGroupId) {
         Example example = getExample(userGroupId);
         return userGroupPermissionDetailsMapper.deleteByExample(example);
+    }
+
+    /**
+     * TODO
+     * @param userGroupId
+     * @return
+     */
+    public Set<Integer> getPermissionIdsByUserGroupId(Integer userGroupId) {
+        if (userGroupId == null || userGroupId < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        UserGroupPermissionDetails userGroupPermissionDetailsRequest = new UserGroupPermissionDetails();
+        userGroupPermissionDetailsRequest.setUserGroupId(userGroupId);
+        List<UserGroupPermissionDetails> select = userGroupPermissionDetailsMapper.select(userGroupPermissionDetailsRequest);
+//        if (!CollectionUtils.isEmpty(select)){
+//            select.stream()
+//                    .filter(Objects::nonNull)
+//                    .map(userGroupPermissionDetailsResponse -> {
+//                        PermissionGroup permissionGroup = permissionGroupService.selectByPrimaryKey(userGroupPermissionDetailsResponse.getPermissionGroupId());
+//                        if (permissionGroup != null){
+//                            permissionGroup.getId()
+//                        }
+//                    })
+//        }
+        return null;
     }
 
     /**

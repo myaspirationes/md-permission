@@ -129,6 +129,8 @@ public class UserGroupService {
 
     /**
      * 添加用户组
+     * 1、维护用户组与权限组关系表
+     * 2、维护用户组与条件关系表
      * @param userGroupDto
      */
     @PreAuthorize("hasAnyAuthority('user_manage')")
@@ -139,6 +141,7 @@ public class UserGroupService {
         // 插入数据
         UserGroup userGroup = new UserGroup(userGroupDto.getGroupCode(), userGroupDto.getGroupName());
         Integer insertCount = userGroupMapper.insertSelective(userGroup);
+        // 维护用户组与权限组关系表,维护用户组与条件关系表
         if (insertCount != null && insertCount > 0){
             updateUserGroupPermissionDetailsAndUserGroupConditionAndUserPermission(userGroup.getId(),userGroupDto.getPermissionGroupIds(),userGroupDto.getSearchConditionIds());
         }
@@ -163,9 +166,9 @@ public class UserGroupService {
             updateUserGroupPermissionDetailsAndUserGroupConditionAndUserPermission(userGroup.getId(),userGroupDto.getPermissionGroupIds(),userGroupDto.getSearchConditionIds());
         }
         // 权限组不为空，更新用户权限组详情
-        if (updateCount != null && updateCount > 0){
-            userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
-        }
+       // if (updateCount != null && updateCount > 0){
+       //    userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
+       // }
         return updateCount;
     }
 
@@ -187,7 +190,7 @@ public class UserGroupService {
 
         userGroupConditionService.updateUserGroupCondition(userGroupId,searchConditionList);
         // 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
-        updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(userGroupId,searchConditionList,permissionGroupIds);
+        // updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(userGroupId,searchConditionList,permissionGroupIds);
     }
 
     /**
@@ -238,6 +241,22 @@ public class UserGroupService {
                     }).filter(Objects::nonNull).collect(Collectors.toList());
         }
         return null;
+    }
+
+    /**
+     * 批处理用户组
+     * @param userGroupId
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public void userGroupBatchProcessing(Integer userGroupId) {
+        if (userGroupId == null || userGroupId < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        // 用户组条件
+        List<UserGroupCondition> userGroupConditions = userGroupConditionService.selectUserGroupConditionByUserGroupId(userGroupId);
+        // 用户组权限
+        Set<Integer> permissionIds = userGroupPermissionDetailsService.getPermissionIdsByUserGroupId(userGroupId);
+
     }
 
     /**

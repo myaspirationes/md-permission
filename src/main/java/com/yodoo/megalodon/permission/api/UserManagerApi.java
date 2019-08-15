@@ -104,10 +104,9 @@ public class UserManagerApi {
 
     /**
      * 添加用户组:
-     * 1、用户组权限表
-     * 2、用户管理用户组权限表
-     * 3、用户组条件表
-     * 4、用户管理用户组权限表
+     * 1、维护用户组与条件关系表
+     * 2、维护用户组与权限组关系表
+     * 3、用户组表
      *
      * @param userGroupDto
      */
@@ -118,10 +117,9 @@ public class UserManagerApi {
 
     /**
      * 更新用户组：
-     * 1、用户组权限表
-     * 2、用户管理用户组权限表
-     * 3、用户组条件表
-     * 4、用户管理用户组权限表
+     * 1、维护用户组与条件关系表
+     * 2、维护用户组与权限组关系表
+     * 3、用户组表
      * @param userGroupDto
      * @return
      */
@@ -152,5 +150,14 @@ public class UserManagerApi {
     @PreAuthorize("hasAnyAuthority('user_manage')")
     public List<UserGroupDto> getUserGroupAll(){
         return userGroupService.getUserGroupAll();
+    }
+
+    /**
+     * 用户组批处理
+     * @param userGroupId
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public void userGroupBatchProcessing(Integer userGroupId){
+        userGroupService.userGroupBatchProcessing(userGroupId);
     }
 }
