@@ -4,9 +4,11 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
-import com.yodoo.megalodon.permission.entity.*;
+import com.yodoo.megalodon.permission.entity.PermissionGroup;
+import com.yodoo.megalodon.permission.entity.SearchCondition;
+import com.yodoo.megalodon.permission.entity.UserGroup;
+import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserGroupMapper;
@@ -214,6 +216,8 @@ public class UserGroupService {
                         userPermissionDetailsService.deleteUserPermissionDetailsByUserId(userId);
                     });
         }
+        // 用户与用户组关系表
+        userGroupDetailsService.deleteUserGroupDetailsByUserGroupId(userGroupId);
         // 用户管理用户组权限表
         userPermissionTargetUserGroupDetailsService.deleteUserPermissionTargetUserGroupDetailsByUserGroupId(userGroupId);
         // 用户组权限组关系
@@ -227,10 +231,7 @@ public class UserGroupService {
      * @return
      */
     public List<UserGroupDto> getUserGroupAll() {
-        Example example = new Example(UserGroup.class);
-        example.setOrderByClause("group_name ASC");
-        Example.Criteria criteria = example.createCriteria();
-        List<UserGroup> userGroups = userGroupMapper.selectByExample(example);
+        List<UserGroup> userGroups = userGroupMapper.getUserGroupAll();
         if (!CollectionUtils.isEmpty(userGroups)){
             return userGroups.stream()
                     .filter(Objects::nonNull)
@@ -249,27 +250,57 @@ public class UserGroupService {
      */
     @PreAuthorize("hasAnyAuthority('user_manage')")
     public void userGroupBatchProcessing(Integer userGroupId) {
-        if (userGroupId == null || userGroupId < 0){
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        // 如果用户组不为空，安传用户的用户组id 处理，否则处理所有用户组
+        Set<Integer> userGroupList = new HashSet<>();
+        if (userGroupId != null && userGroupId > 0){
+            userGroupList.add(userGroupId);
+        }else {
+            List<UserGroupDto> userGroupAll = getUserGroupAll();
+            if (!CollectionUtils.isEmpty(userGroupAll)){
+                userGroupList = userGroupAll.stream().filter(Objects::nonNull).map(UserGroupDto::getId).collect(Collectors.toSet());
+            }
         }
+        // 执行处理
+        if(!CollectionUtils.isEmpty(userGroupList)){
+            userGroupList.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(userGroupIdSet -> {
+                        executeGroupBatch(userGroupIdSet);
+                    });
+        }
+    }
+
+    /**
+     * 执行批处理
+     * @param userGroupId
+     */
+    private void executeGroupBatch(Integer userGroupId) {
         // 用户组条件
-        List<UserGroupCondition> userGroupConditions = userGroupConditionService.selectUserGroupConditionByUserGroupId(userGroupId);
-        // 用户组权限
+        UserGroupCondition userGroupConditions = userGroupConditionService.selectUserGroupConditionByUserGroupId(userGroupId);
+        // 如果用户组条件不为空，查询条件下的获取用户ids
+        Set<Integer> userIdList = userService.selectUserListByCondition(userGroupConditions);
+        // 权限 ids
         Set<Integer> permissionIds = userGroupPermissionDetailsService.getPermissionIdsByUserGroupId(userGroupId);
 
+        // 维护用户与用户组关系表
+        userGroupDetailsService.updateUserGroupDetailsBatch(userGroupId, userIdList);
+
+        // 维护用户权限详情和用户组与用户权限关系表
+        userPermissionDetailsService.updateUserPermission(userGroupId,userIdList,permissionIds);
     }
 
     /**
      * 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
      * @param userGroupId
-     * @param searchConditionList
+     * @param userGroupConditions
      */
-    private void updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(Integer userGroupId, List<SearchCondition> searchConditionList, Set<Integer> permissionGroupIds) {
+    @Deprecated
+    private void updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(Integer userGroupId, UserGroupCondition userGroupConditions, Set<Integer> permissionGroupIds) {
         // 用户列表
-        List<User> userList = userService.selectUserListByCondition(searchConditionList);
+        Set<Integer> userIdList = userService.selectUserListByCondition(userGroupConditions);
         Set<Integer> userIds = new HashSet<>();
-        if (!CollectionUtils.isEmpty(userList)){
-            Set<Integer> collect = userList.stream().filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+        if (!CollectionUtils.isEmpty(userIdList)){
+
         }
         // 权限组ids
         Set<Integer> permissionGroupIdList = new HashSet<>();

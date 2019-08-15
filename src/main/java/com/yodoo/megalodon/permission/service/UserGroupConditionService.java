@@ -1,7 +1,6 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.mapper.UserGroupConditionMapper;
@@ -25,9 +24,6 @@ public class UserGroupConditionService {
 
     @Autowired
     private UserGroupConditionMapper userGroupConditionMapper;
-
-    @Autowired
-    private SearchConditionService searchConditionService;
 
     /**
      * 通过查询条件id查询
@@ -53,16 +49,24 @@ public class UserGroupConditionService {
         }
         // 插入
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(searchConditionList)){
+            StringBuilder sqlBuffer = new StringBuilder();
             searchConditionList.stream()
                     .filter(Objects::nonNull)
-                    .map(searchCondition -> {
-                        UserGroupCondition userGroupCondition = new UserGroupCondition();
-                        userGroupCondition.setUserGroupId(userGroupId);
-                        userGroupCondition.setSearchConditionId(searchCondition.getId());
-                        userGroupCondition.setOperator(searchCondition.getConditionCode());
-                        userGroupCondition.setMatchValue(searchCondition.getConditionName());
-                        return userGroupConditionMapper.insertSelective(userGroupCondition);
-                    }).filter(Objects::nonNull).count();
+                    .forEach(searchCondition -> {
+                        sqlBuffer.append(searchCondition.getConditionName());
+                        sqlBuffer.append(" ");
+                        sqlBuffer.append(searchCondition.getConditionCode());
+                        sqlBuffer.append(" ");
+                        sqlBuffer.append(searchCondition.getConditionValue());
+                        sqlBuffer.append(" and ");
+                    });
+            String sqlBufferString = sqlBuffer.toString();
+            String sqlRequest = sqlBufferString.substring(0, sqlBufferString.length() - 5);
+
+            UserGroupCondition userGroupCondition = new UserGroupCondition();
+            userGroupCondition.setUserGroupId(userGroupId);
+            userGroupCondition.setOperator(sqlRequest);
+            userGroupConditionMapper.insertSelective(userGroupCondition);
         }
     }
 
@@ -83,9 +87,9 @@ public class UserGroupConditionService {
      * @param userGroupId
      * @return
      */
-    public List<UserGroupCondition> selectUserGroupConditionByUserGroupId(Integer userGroupId){
+    public UserGroupCondition selectUserGroupConditionByUserGroupId(Integer userGroupId){
         UserGroupCondition userGroupCondition = new UserGroupCondition();
         userGroupCondition.setUserGroupId(userGroupId);
-        return userGroupConditionMapper.select(userGroupCondition);
+        return userGroupConditionMapper.selectOne(userGroupCondition);
     }
 }

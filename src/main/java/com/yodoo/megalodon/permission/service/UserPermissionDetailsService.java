@@ -116,12 +116,25 @@ public class UserPermissionDetailsService {
     }
 
     /**
+     * 更新
+     * @param userId
+     * @param permissionIds
+     */
+    public void updateUserPermission(Integer userId, Set<Integer> permissionIds) {
+        if (userId != null && userId > 0){
+            deleteUserPermissionDetailsByUserId(userId);
+        }
+        if (userId != null && userId > 0 && !CollectionUtils.isEmpty(permissionIds)){
+            insertUserPermissionDetails(userId, permissionIds);
+        }
+    }
+
+    /**
      * 变更权限
      * @Author houzhen
-     * @Date 10:23 2019/8/6 userGroupId,userList,permissionIds
+     * @Date 10:23 2019/8/6
      **/
-    public void updateUserPermission (Integer userGroupId, Set<Integer> userIds, Set<Integer> permissionIds)
-    {
+    public void updateUserPermission (Integer userGroupId, Set<Integer> userIds, Set<Integer> permissionIds) {
         logger.info("UserPermissionDetailsService.updateUserPermission userGroupId : {},userIds:{},permissionIds:{}", userGroupId,JsonUtils.obj2json(userIds),JsonUtils.obj2json(permissionIds));
         // 参数判断
         if (userGroupId == null && userGroupId < 0) {
@@ -131,13 +144,10 @@ public class UserPermissionDetailsService {
         if (!CollectionUtils.isEmpty(userIds)){
             userIds.stream()
                     .filter(Objects::nonNull)
-                    .forEach(userId -> {
+                    .map(userId -> {
                         // 先删除旧的数据
-                        Example example = new Example(UserPermissionDetails.class);
-                        Example.Criteria criteria = example.createCriteria();
-                        criteria.andEqualTo("userId", userId);
-                        userPermissionDetailsMapper.deleteByExample(example);
-                    });
+                        return deleteUserPermissionDetailsByUserId(userId);
+                    }).filter(Objects::nonNull).count();
         }
         // 用户ids和权限ids不为空
         Set<Integer> userPermissionDetailsIds = new HashSet<>();
@@ -148,11 +158,12 @@ public class UserPermissionDetailsService {
                     .map(userId -> {
                         permissionIds.stream()
                                 .filter(Objects::nonNull)
-                                .forEach(permissionId -> {
+                                .map(permissionId -> {
                                     UserPermissionDetails userPermissionDetails = new UserPermissionDetails(userId, permissionId);
-                                    userPermissionDetailsMapper.insertSelective(userPermissionDetails);
+                                    Integer insertCount = userPermissionDetailsMapper.insertSelective(userPermissionDetails);
                                     userPermissionDetailsIds.add(userPermissionDetails.getId());
-                                });
+                                    return insertCount;
+                                }).filter(Objects::nonNull).count();
                         return null;
                     }).count();
         }

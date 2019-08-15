@@ -10,21 +10,26 @@ import com.yodoo.megalodon.permission.common.BaseEntity;
 public class SearchCondition extends BaseEntity {
 
     /**
+     * 条件名称
+     **/
+    private String conditionName;
+    /**
      * 条件code
      **/
     private String conditionCode;
 
     /**
-     * 条件名称
-     **/
-    private String conditionName;
+     * 条件值
+     */
+    private String conditionValue;
 
     public SearchCondition() {
     }
 
-    public SearchCondition(String conditionCode, String conditionName) {
-        this.conditionCode = conditionCode;
+    public SearchCondition(String conditionName, String conditionCode, String conditionValue) {
         this.conditionName = conditionName;
+        this.conditionCode = conditionCode;
+        this.conditionValue = conditionValue;
     }
 
     public String getConditionCode() {
@@ -43,4 +48,12 @@ public class SearchCondition extends BaseEntity {
         this.conditionName = conditionName == null ? null : conditionName.trim();
     }
 
+    public String getConditionValue() {
+        return conditionValue;
+    }
+
+    public SearchCondition setConditionValue(String conditionValue) {
+        this.conditionValue = conditionValue;
+        return this;
+    }
 }

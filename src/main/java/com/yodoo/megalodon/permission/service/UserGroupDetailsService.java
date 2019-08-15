@@ -28,46 +28,59 @@ public class UserGroupDetailsService {
     private UserGroupDetailsMapper userGroupDetailsMapper;
 
     /**
-     * 通过用户 id 删除
-     * @param userId
-     * @return
-     */
-    public Integer deleteUserGroupByUserId(Integer userId) {
-        if (userId != null && userId > 0){
-            Example example = new Example(UserGroupDetails.class);
-            Example.Criteria criteria = example.createCriteria();
-            criteria.andEqualTo("userId", userId);
-            return userGroupDetailsMapper.deleteByExample(example);
-        }
-        return null;
-    }
-
-    /**
-     * 插入用户组详情数据
-     * @param userId
-     * @param userGroupIds
-     * @return
-     */
-    public Long insertUserGroupDetails(Integer userId, Set<Integer> userGroupIds) {
-        Long count = null;
-        if (userId != null && userId > 0 && !CollectionUtils.isEmpty(userGroupIds)){
-            count = userGroupIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userGroupId -> {
-                        return userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId, userId));
-                    }).filter(Objects::nonNull).count();
-        }
-        return count;
-    }
-
-    /**
      * 通过用户组id查询总数
      * @param userGroupId
      * @return
      */
     public Integer selectCountByUserGroupId(Integer userGroupId) {
-        Example example = getExample(userGroupId);
-        return userGroupDetailsMapper.selectCountByExample(example);
+        return userGroupDetailsMapper.selectCountByExample(getExample(userGroupId));
+    }
+
+    /**
+     * 通过用户组id 删除
+     * @param userGroupId
+     */
+    public void deleteUserGroupDetailsByUserGroupId(Integer userGroupId) {
+        userGroupDetailsMapper.deleteByExample(getExample(userGroupId));
+    }
+
+    /**
+     * 更新用户组详情
+     * @param userId
+     * @param userGroupIds
+     */
+    public void updateUserGroupDetails(Integer userId, Set<Integer> userGroupIds){
+        if (userId != null && userId > 0){
+            Example example = new Example(UserGroupDetails.class);
+            Example.Criteria criteria = example.createCriteria();
+            criteria.andEqualTo("userId", userId);
+            userGroupDetailsMapper.deleteByExample(example);
+        }
+        if (userId != null && userId > 0 && !CollectionUtils.isEmpty(userGroupIds)){
+            userGroupIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(userGroupId -> {
+                        return userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId, userId));
+                    }).filter(Objects::nonNull).count();
+        }
+    }
+
+    /**
+     * 批量处理时维护用户与用户组关系表
+     * @param userGroupId
+     * @param userIdList
+     */
+    public void updateUserGroupDetailsBatch(Integer userGroupId, Set<Integer> userIdList) {
+        if (userGroupId != null && userGroupId > 0){
+            deleteUserGroupDetailsByUserGroupId(userGroupId);
+        }
+        if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(userIdList)){
+            userIdList.stream()
+                    .filter(Objects::nonNull)
+                    .map(userId -> {
+                       return userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId,userId));
+                    }).filter(Objects::nonNull).count();
+        }
     }
 
     /**
@@ -75,8 +88,7 @@ public class UserGroupDetailsService {
      * @param userGroupId
      */
     public Set<Integer>  selectUserIdsByUserGroupId(Integer userGroupId) {
-        Example example = getExample(userGroupId);
-        List<UserGroupDetails> userGroupDetails = userGroupDetailsMapper.selectByExample(example);
+        List<UserGroupDetails> userGroupDetails = userGroupDetailsMapper.selectByExample(getExample(userGroupId));
         Set<Integer> userIds = new HashSet<>();
         if (!CollectionUtils.isEmpty(userGroupDetails)){
             userIds = userGroupDetails.stream()
@@ -87,7 +99,6 @@ public class UserGroupDetailsService {
         }
         return userIds;
     }
-
 
     private Example getExample(Integer userGroupId){
         Example example = new Example(UserGroupDetails.class);

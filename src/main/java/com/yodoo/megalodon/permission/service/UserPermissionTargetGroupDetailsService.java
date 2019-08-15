@@ -121,7 +121,7 @@ public class UserPermissionTargetGroupDetailsService {
      * @return
      */
     public List<UserPermissionTargetGroupDetailsDto> getTargetGroupDetailsByUserPermissionIds(List<Integer> userPermissionIds) {
-        List<UserPermissionTargetGroupDetailsDto> UserPermissionTargetGroupDetailsDtoList = new ArrayList<>();
+        List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDtoList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(userPermissionIds)){
             userPermissionIds.stream()
                     .filter(Objects::nonNull)
@@ -137,13 +137,13 @@ public class UserPermissionTargetGroupDetailsService {
                                         return userPermissionTargetGroupDetailsDto;
                                     }).filter(Objects::nonNull).collect(Collectors.toList());
                             if (!CollectionUtils.isEmpty(collect)){
-                                UserPermissionTargetGroupDetailsDtoList.addAll(collect);
+                                userPermissionTargetGroupDetailsDtoList.addAll(collect);
                             }
                         }
                         return null;
                     }).count();
         }
-        return UserPermissionTargetGroupDetailsDtoList;
+        return userPermissionTargetGroupDetailsDtoList;
     }
 
     private Example getExample(Integer userPermissionId){

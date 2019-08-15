@@ -10,14 +10,19 @@ import com.yodoo.megalodon.permission.common.BaseDto;
 public class SearchConditionDto extends BaseDto {
 
     /**
+     * 条件名称
+     **/
+    private String conditionName;
+
+    /**
      * 条件code
      **/
     private String conditionCode;
 
     /**
-     * 条件名称
-     **/
-    private String conditionName;
+     * 条件值
+     */
+    private String conditionValue;
 
     public String getConditionCode() {
         return conditionCode;
@@ -34,6 +39,15 @@ public class SearchConditionDto extends BaseDto {
 
     public SearchConditionDto setConditionName(String conditionName) {
         this.conditionName = conditionName;
+        return this;
+    }
+
+    public String getConditionValue() {
+        return conditionValue;
+    }
+
+    public SearchConditionDto setConditionValue(String conditionValue) {
+        this.conditionValue = conditionValue;
         return this;
     }
 }

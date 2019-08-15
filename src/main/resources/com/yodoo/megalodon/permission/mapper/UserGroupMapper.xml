@@ -21,4 +21,10 @@
         where id != #{id,jdbcType=INTEGER} and group_code = #{groupCode,jdbcType=VARCHAR}
     </select>
 
+    <select id="getUserGroupAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from user_group order by group_name ASC
+    </select>
+
 </mapper>

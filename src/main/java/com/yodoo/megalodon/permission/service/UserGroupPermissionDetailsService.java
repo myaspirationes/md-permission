@@ -149,7 +149,7 @@ public class UserGroupPermissionDetailsService {
     }
 
     /**
-     * TODO
+     * 通过用户组id获取权限ids
      * @param userGroupId
      * @return
      */
@@ -157,20 +157,17 @@ public class UserGroupPermissionDetailsService {
         if (userGroupId == null || userGroupId < 0){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
+        // 先查询用户组与权限组关系表，获取权限组id
         UserGroupPermissionDetails userGroupPermissionDetailsRequest = new UserGroupPermissionDetails();
         userGroupPermissionDetailsRequest.setUserGroupId(userGroupId);
         List<UserGroupPermissionDetails> select = userGroupPermissionDetailsMapper.select(userGroupPermissionDetailsRequest);
-//        if (!CollectionUtils.isEmpty(select)){
-//            select.stream()
-//                    .filter(Objects::nonNull)
-//                    .map(userGroupPermissionDetailsResponse -> {
-//                        PermissionGroup permissionGroup = permissionGroupService.selectByPrimaryKey(userGroupPermissionDetailsResponse.getPermissionGroupId());
-//                        if (permissionGroup != null){
-//                            permissionGroup.getId()
-//                        }
-//                    })
-//        }
-        return null;
+
+        Set<Integer> permissionIds = new HashSet<>();
+        if (!CollectionUtils.isEmpty(select)){
+            Set<Integer> collect = select.stream().filter(Objects::nonNull).map(UserGroupPermissionDetails::getPermissionGroupId).collect(Collectors.toSet());
+            permissionIds = permissionGroupDetailsService.getPermissionIds(collect);
+        }
+        return permissionIds;
     }
 
     /**

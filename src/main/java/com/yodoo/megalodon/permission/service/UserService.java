@@ -12,6 +12,7 @@ import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.User;
+import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
 import com.yodoo.megalodon.permission.enums.UserStatusEnum;
@@ -150,7 +151,7 @@ public class UserService {
         Integer insertUserResponseCount = userMapper.insertSelective(user);
         // 更新用户组表与用户关系表
         if (insertUserResponseCount != null && insertUserResponseCount > 0){
-            updateUserGroup(user.getId(), userDto.getUserGroupIds());
+            userGroupDetailsService.updateUserGroupDetails(user.getId(), userDto.getUserGroupIds());
         }
         return insertUserResponseCount;
     }
@@ -169,7 +170,7 @@ public class UserService {
 
         // 如果用户有所属用户组，更新用户组详情
         if (updateUserResponseCount != null && updateUserResponseCount > 0){
-            updateUserGroup(user.getId(), userDto.getUserGroupIds());
+            userGroupDetailsService.updateUserGroupDetails(user.getId(), userDto.getUserGroupIds());
         }
         return updateUserResponseCount;
     }
@@ -422,12 +423,18 @@ public class UserService {
 
     /**
      * 条件查询用户 TODO
-     * @param searchConditionDtoList
+     * @param userGroupConditions
      * @return
      */
-    public List<User> selectUserListByCondition(List<SearchCondition> searchConditionList) {
-        List<User> list = new ArrayList<>();
-        return list;
+    public Set<Integer> selectUserListByCondition(UserGroupCondition userGroupConditions) {
+        Set<Integer> userIdList = new HashSet<>();
+        if (userGroupConditions != null && org.apache.commons.lang3.StringUtils.isNoneBlank(userGroupConditions.getOperator())){
+            List<User> userList = userMapper.selectByCondition(userGroupConditions.getOperator());
+            if (!CollectionUtils.isEmpty(userList)){
+                userIdList = userList.stream().filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+            }
+        }
+        return userIdList;
     }
 
     /**
@@ -540,26 +547,13 @@ public class UserService {
     }
 
     /**
-     * 添加用户组详情数据
-     * @param userId
-     * @param userGroupIds
-     */
-    private void updateUserGroup(Integer userId, Set<Integer> userGroupIds) {
-       userGroupDetailsService.deleteUserGroupByUserId(userId);
-       userGroupDetailsService.insertUserGroupDetails(userId, userGroupIds);
-    }
-
-    /**
      * 添加用户权限详情 TODO
      * @param userId
      * @param permissionIds
      */
     private void updateUserPermissionDetails(Integer userId, Set<Integer> permissionIds, Set<Integer> userGroupIds) {
         // 查询用户组所属的权限
-        Map<Integer, Set<Integer>> permissionIdMap = new HashMap<>();
-        if (!CollectionUtils.isEmpty(userGroupIds)){
-            permissionIdMap = userGroupPermissionDetailsService.getPermissionIdsByUserGroupIds(userGroupIds);
-        }
+        Map<Integer, Set<Integer>>  permissionIdMap = userGroupPermissionDetailsService.getPermissionIdsByUserGroupIds(userGroupIds);
         // 把用户选择的权限id和用户所属的用户组权限合并
         if (!CollectionUtils.isEmpty(permissionIdMap)){
             for (Integer userGroupId : permissionIdMap.keySet()) {
@@ -568,8 +562,8 @@ public class UserService {
             }
         }
         // 对于用户权限表，先删除再插入
-        userPermissionDetailsService.deleteUserPermissionDetailsByUserId(userId);
-        userPermissionDetailsService.insertUserPermissionDetails(userId, permissionIds);
+        userPermissionDetailsService.updateUserPermission(userId, permissionIds);
+
         // 把用户所有的用户权限查询出来
         List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList) && !CollectionUtils.isEmpty(permissionIdMap)){

@@ -4,6 +4,8 @@ import com.yodoo.megalodon.permission.dto.MenuDto;
 import com.yodoo.megalodon.permission.entity.Menu;
 import com.yodoo.megalodon.permission.entity.MenuPermissionDetails;
 import com.yodoo.megalodon.permission.entity.Permission;
+import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
+import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.MenuMapper;
 import com.yodoo.megalodon.permission.mapper.MenuPermissionDetailsMapper;
 import com.yodoo.megalodon.permission.util.BeanCopyUtils;
@@ -63,7 +65,7 @@ public class MenuTreeService {
     public List<MenuDto> getMenuTree(Integer userId) {
         logger.info("MenuTreeService#getTreeMenu userId:{}", userId);
         if (userId == null) {
-            return null;
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 查询全部菜单
         List<Menu> allMenuList = menuMapper.selectAll();

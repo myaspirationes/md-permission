@@ -5,7 +5,6 @@ import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.service.UserGroupService;
-import com.yodoo.megalodon.permission.service.UserPermissionDetailsService;
 import com.yodoo.megalodon.permission.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,9 +25,6 @@ public class UserManagerApi {
 
     @Autowired
     private UserGroupService userGroupService;
-
-    @Autowired
-    private UserPermissionDetailsService userPermissionDetailsService;
 
     /**
      *  条件分页查询用户列表:
@@ -154,6 +150,9 @@ public class UserManagerApi {
 
     /**
      * 用户组批处理
+     * 1、维护用户与用户组关系表
+     * 2、维护用户权限表
+     * 3、维护用户权限与用户组关系表
      * @param userGroupId
      */
     @PreAuthorize("hasAnyAuthority('user_manage')")

@@ -20,4 +20,11 @@ public interface UserMapper extends BaseMapper<User> {
      * @return
      */
     List<User> selectUserNotInIds(@Param("userIds") Set<Integer> userIds);
+
+    /**
+     * 条件 sql 查询
+     * @param operator
+     * @return
+     */
+    List<User> selectByCondition(@Param("operator") String operator);
 }

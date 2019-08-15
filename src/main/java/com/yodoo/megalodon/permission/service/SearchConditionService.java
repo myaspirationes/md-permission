@@ -78,7 +78,9 @@ public class SearchConditionService {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public Integer addSearchCondition(SearchConditionDto searchConditionDto){
         addSearchConditionParameterCheck(searchConditionDto);
-        return searchConditionMapper.insertSelective(new SearchCondition(searchConditionDto.getConditionCode(), searchConditionDto.getConditionName()));
+        SearchCondition searchCondition = new SearchCondition();
+        BeanUtils.copyProperties(searchConditionDto, searchCondition);
+        return searchConditionMapper.insertSelective(searchCondition);
     }
 
     /**
@@ -89,12 +91,9 @@ public class SearchConditionService {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public Integer editSearchCondition(SearchConditionDto searchConditionDto){
         SearchCondition searchCondition = editSearchConditionParameterCheck(searchConditionDto);
-        if (StringUtils.isNoneBlank(searchConditionDto.getConditionCode())){
-            searchCondition.setConditionCode(searchConditionDto.getConditionCode());
-        }
-        if (StringUtils.isNoneBlank(searchConditionDto.getConditionName())){
-            searchCondition.setConditionName(searchConditionDto.getConditionName());
-        }
+        searchCondition.setConditionName(searchConditionDto.getConditionName());
+        searchCondition.setConditionCode(searchConditionDto.getConditionCode());
+        searchCondition.setConditionValue(searchConditionDto.getConditionValue());
         return searchConditionMapper.updateByPrimaryKeySelective(searchCondition);
     }
 
@@ -161,6 +160,8 @@ public class SearchConditionService {
         Example.Criteria criteria = example.createCriteria();
         criteria.andNotEqualTo("id",searchConditionDto.getId());
         criteria.andEqualTo("conditionCode", searchConditionDto.getConditionCode());
+        criteria.andEqualTo("conditionName",searchConditionDto.getConditionName());
+        criteria.andEqualTo("conditionValue",searchConditionDto.getConditionValue());
         SearchCondition searchConditionResponse =  searchConditionMapper.selectOneByExample(example);
         if (searchConditionResponse != null){
             throw new PermissionException(PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST, PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST_MSG);
@@ -178,7 +179,9 @@ public class SearchConditionService {
         }
         Example example = new Example(SearchCondition.class);
         Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("conditionName",searchConditionDto.getConditionName());
         criteria.andEqualTo("conditionCode",searchConditionDto.getConditionCode());
+        criteria.andEqualTo("conditionValue",searchConditionDto.getConditionValue());
         SearchCondition searchCondition =  searchConditionMapper.selectOneByExample(example);
         if (searchCondition != null){
             throw new PermissionException(PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST, PermissionBundleKey.SEARCH_CONDITION_ALREADY_EXIST_MSG);

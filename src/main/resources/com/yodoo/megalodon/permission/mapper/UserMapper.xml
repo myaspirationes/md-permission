@@ -34,4 +34,11 @@
         </foreach>
     </select>
 
+    <select id="selectByCondition" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from user
+        where ${operator}
+    </select>
+
 </mapper>
