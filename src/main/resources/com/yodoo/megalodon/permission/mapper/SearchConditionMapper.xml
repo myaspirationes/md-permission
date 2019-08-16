@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yodoo.megalodon.permission.mapper.SearchConditionMapper">
-    <resultMap id="BaseResultMap" type="com.yodoo.megalodon.permission.entity.SearchCondition">
+    <resultMap id="BaseResultMap"
+               extends="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonResultMap"
+               type="com.yodoo.megalodon.permission.entity.SearchCondition">
         <id column="id" jdbcType="INTEGER" property="id"/>
         <result column="condition_name" jdbcType="VARCHAR" property="conditionName"/>
         <result column="condition_code" jdbcType="VARCHAR" property="conditionCode"/>
         <result column="condition_value" jdbcType="VARCHAR" property="conditionValue"/>
-        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
-        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
-        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-    id, condition_name, condition_code, condition_value, create_user, create_time, update_user, update_time
+    id, condition_name, condition_code, condition_value,
+        <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 
 

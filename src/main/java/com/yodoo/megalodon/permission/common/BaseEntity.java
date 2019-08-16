@@ -6,7 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.util.Date;
+import java.time.Instant;
 
 /**
  * @Date 2019/6/10 20:03
@@ -23,22 +23,22 @@ public class BaseEntity {
     /**
      * 创建人
      **/
-    private String createUser;
+    private Integer createdBy;
 
     /**
      * 创建日期
      **/
-    private Date createTime;
+    private Instant createdTime;
 
     /**
      * 更新人
      **/
-    private String updateUser;
+    private Integer lastModifiedBy;
 
     /**
      * 最后一次修改时间
      **/
-    private Date updateTime;
+    private Instant lastModifiedTime;
 
     public Integer getId() {
         return id;
@@ -48,49 +48,54 @@ public class BaseEntity {
         this.id = id;
     }
 
-    public String getCreateUser() {
-        return createUser;
+    public Integer getCreatedBy() {
+        return createdBy;
     }
 
-    public void setCreateUser(String createUser) {
-        this.createUser = createUser == null ? null : createUser.trim();
+    public BaseEntity setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
+        return this;
     }
 
-    public Date getCreateTime() {
-        return createTime;
+    public Instant getCreatedTime() {
+        return createdTime;
     }
 
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
+    public BaseEntity setCreatedTime(Instant createdTime) {
+        this.createdTime = createdTime;
+        return this;
     }
 
-    public String getUpdateUser() {
-        return updateUser;
+    public Integer getLastModifiedBy() {
+        return lastModifiedBy;
     }
 
-    public void setUpdateUser(String updateUser) {
-        this.updateUser = updateUser == null ? null : updateUser.trim();
+    public BaseEntity setLastModifiedBy(Integer lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+        return this;
     }
 
-    public Date getUpdateTime() {
-        return updateTime;
+    public Instant getLastModifiedTime() {
+        return lastModifiedTime;
     }
 
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
+    public BaseEntity setLastModifiedTime(Instant lastModifiedTime) {
+        this.lastModifiedTime = lastModifiedTime;
+        return this;
     }
 
-    public void setCreateUser() {
+    public void setCreatedBy() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            this.createUser = (String) authentication.getPrincipal();
+            this.createdBy = (Integer) authentication.getPrincipal();
         }
     }
 
-    public void setUpdateUser() {
+    public void setLastModifiedBy() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            this.updateUser = (String) authentication.getPrincipal();
+            this.lastModifiedBy = (Integer) authentication.getPrincipal();
+            this.lastModifiedTime = Instant.now();
         }
     }
 

@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yodoo.megalodon.permission.mapper.MenuMapper">
-    <resultMap id="BaseResultMap" type="com.yodoo.megalodon.permission.entity.Menu">
+    <resultMap id="BaseResultMap"
+               extends="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonResultMap"
+               type="com.yodoo.megalodon.permission.entity.Menu">
         <id column="id" jdbcType="INTEGER" property="id"/>
         <result column="parent_id" jdbcType="INTEGER" property="parentId"/>
         <result column="menu_code" jdbcType="VARCHAR" property="menuCode"/>
         <result column="menu_name" jdbcType="VARCHAR" property="menuName"/>
         <result column="menu_target" jdbcType="VARCHAR" property="menuTarget"/>
         <result column="order_no" jdbcType="VARCHAR" property="orderNo"/>
-        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
-        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
-        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-    id, parent_id, menu_code, menu_name, menu_target, order_no, create_user, create_time, 
-    update_user, update_time
+    id, parent_id, menu_code, menu_name, menu_target, order_no,
+        <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 
 </mapper>

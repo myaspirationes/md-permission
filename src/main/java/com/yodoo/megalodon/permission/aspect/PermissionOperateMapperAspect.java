@@ -1,7 +1,6 @@
 package com.yodoo.megalodon.permission.aspect;
 
 import com.yodoo.megalodon.permission.common.BaseEntity;
-import com.yodoo.megalodon.permission.util.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -59,11 +58,11 @@ public class PermissionOperateMapperAspect {
                 if (args[0] instanceof List) {
                     List<BaseEntity> recordList = (List<BaseEntity>) args[0];
                     for (BaseEntity entity : recordList) {
-                        if (StringUtils.isEmpty(entity.getCreateUser())) {
-                            entity.setCreateUser();
+                        if (entity.getCreatedBy() == null) {
+                            entity.setCreatedBy();
                         }
-                        if (StringUtils.isEmpty(entity.getUpdateUser())) {
-                            entity.setUpdateUser();
+                        if (entity.getLastModifiedBy() == null) {
+                            entity.setLastModifiedBy();
                         }
                     }
                 }
@@ -72,11 +71,11 @@ public class PermissionOperateMapperAspect {
             else if (INSERT_SET.contains(methodName)) {
                 if (args[0] instanceof BaseEntity) {
                     BaseEntity entity = (BaseEntity) args[0];
-                    if (StringUtils.isEmpty(entity.getCreateUser())) {
-                        entity.setCreateUser();
+                    if (entity.getCreatedBy() == null) {
+                        entity.setCreatedBy();
                     }
-                    if (StringUtils.isEmpty(entity.getUpdateUser())) {
-                        entity.setUpdateUser();
+                    if (entity.getLastModifiedBy() == null) {
+                        entity.setLastModifiedBy();
                     }
                 }
 
@@ -85,8 +84,8 @@ public class PermissionOperateMapperAspect {
             else if (UPDATE_SET.contains(methodName)) {
                 if (args[0] instanceof BaseEntity) {
                     BaseEntity entity = (BaseEntity) args[0];
-                    if (StringUtils.isEmpty(entity.getUpdateUser())) {
-                        entity.setUpdateUser();
+                    if (entity.getLastModifiedBy() == null) {
+                        entity.setLastModifiedBy();
                     }
                 }
             }

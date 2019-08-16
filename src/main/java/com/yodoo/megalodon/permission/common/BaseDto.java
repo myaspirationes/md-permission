@@ -1,5 +1,6 @@
 package com.yodoo.megalodon.permission.common;
 
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -20,25 +21,25 @@ public class BaseDto {
      */
     private int pageSize;
 
-        /**
+    /**
      * 创建人
      **/
-    private String createUser;
+    private Integer createdBy;
 
     /**
      * 创建日期
      **/
-    private Date createTime;
+    private Instant createdTime;
 
     /**
      * 更新人
      **/
-    private String updateUser;
+    private Integer lastModifiedBy;
 
     /**
      * 最后一次修改时间
      **/
-    private Date updateTime;
+    private Instant lastModifiedTime;
 
     public BaseDto() {
     }
@@ -74,39 +75,39 @@ public class BaseDto {
         return this;
     }
 
-    public String getCreateUser() {
-        return createUser;
+    public Integer getCreatedBy() {
+        return createdBy;
     }
 
-    public BaseDto setCreateUser(String createUser) {
-        this.createUser = createUser;
+    public BaseDto setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
         return this;
     }
 
-    public Date getCreateTime() {
-        return createTime;
+    public Instant getCreatedTime() {
+        return createdTime;
     }
 
-    public BaseDto setCreateTime(Date createTime) {
-        this.createTime = createTime;
+    public BaseDto setCreatedTime(Instant createdTime) {
+        this.createdTime = createdTime;
         return this;
     }
 
-    public String getUpdateUser() {
-        return updateUser;
+    public Integer getLastModifiedBy() {
+        return lastModifiedBy;
     }
 
-    public BaseDto setUpdateUser(String updateUser) {
-        this.updateUser = updateUser;
+    public BaseDto setLastModifiedBy(Integer lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
         return this;
     }
 
-    public Date getUpdateTime() {
-        return updateTime;
+    public Instant getLastModifiedTime() {
+        return lastModifiedTime;
     }
 
-    public BaseDto setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
+    public BaseDto setLastModifiedTime(Instant lastModifiedTime) {
+        this.lastModifiedTime = lastModifiedTime;
         return this;
     }
 }

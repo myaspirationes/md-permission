@@ -6,13 +6,10 @@
         <id column="id" jdbcType="INTEGER" property="id"/>
         <result column="user_group_id" jdbcType="INTEGER" property="userGroupId"/>
         <result column="permission_group_id" jdbcType="INTEGER" property="permissionGroupId"/>
-        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
-        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
-        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-    id, user_group_id, permission_group_id, create_user, create_time, update_user, update_time
+    id, user_group_id, permission_group_id,
+        <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 
 </mapper>

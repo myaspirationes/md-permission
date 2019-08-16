@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yodoo.megalodon.permission.mapper.UserGroupMapper">
-    <resultMap id="BaseResultMap" type="com.yodoo.megalodon.permission.entity.UserGroup">
+    <resultMap id="BaseResultMap"
+               extends="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonResultMap"
+               type="com.yodoo.megalodon.permission.entity.UserGroup">
         <id column="id" jdbcType="INTEGER" property="id"/>
         <result column="group_code" jdbcType="VARCHAR" property="groupCode"/>
         <result column="group_name" jdbcType="VARCHAR" property="groupName"/>
-        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
-        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
-        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-    id, group_code, group_name, create_user, create_time, update_user, update_time
+    id, group_code, group_name,
+        <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 
     <select id="selectOtherThanOneself" resultMap="BaseResultMap">

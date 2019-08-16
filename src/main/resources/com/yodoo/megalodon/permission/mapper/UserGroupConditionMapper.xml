@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yodoo.megalodon.permission.mapper.UserGroupConditionMapper">
-    <resultMap id="BaseResultMap" type="com.yodoo.megalodon.permission.entity.UserGroupCondition">
+    <resultMap id="BaseResultMap"
+               extends="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonResultMap"
+               type="com.yodoo.megalodon.permission.entity.UserGroupCondition">
         <id column="id" jdbcType="INTEGER" property="id"/>
         <result column="search_condition_id" jdbcType="INTEGER" property="searchConditionId"/>
         <result column="user_group_id" jdbcType="INTEGER" property="userGroupId"/>
         <result column="operator" jdbcType="VARCHAR" property="operator"/>
         <result column="match_value" jdbcType="VARCHAR" property="matchValue"/>
-        <result column="create_user" jdbcType="VARCHAR" property="createUser"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
-        <result column="update_user" jdbcType="VARCHAR" property="updateUser"/>
-        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-    id, search_condition_id, user_group_id, operator, match_value, create_user, create_time, 
-    update_user, update_time
+    id, search_condition_id, user_group_id, operator, match_value,
+        <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 
 
