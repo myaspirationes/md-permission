@@ -3,6 +3,7 @@ package com.yodoo.megalodon.permission.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -18,6 +19,10 @@ import java.util.Map;
 public class JsonUtils {
 
     private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    static {
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    }
 
     /**
      * javaBean,list,array convert to json string
