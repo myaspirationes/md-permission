@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
+import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
@@ -239,18 +240,24 @@ public class UserGroupService {
         UserGroup userGroup = selectByPrimaryKey(id);
         if (null != userGroup){
             BeanUtils.copyProperties(userGroup, userGroupDto);
-            // 查询用户ids
+            // 查询用户与用户组关系表 获取用户 ids
             Set<Integer> userIds = userGroupDetailsService.selectUserIdsByUserGroupId(id);
             if (!CollectionUtils.isEmpty(userIds)){
                 List<UserDto> userDtoList = userIds.stream()
                         .filter(Objects::nonNull)
                         .map(userId -> {
-                            // 查询用户
+                            // 通过用户id查询用户信息
                             return userService.getUserDtoByUserId(userId);
                         }).filter(Objects::nonNull).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(userDtoList)){
                     userGroupDto.setUserDtoList(userDtoList);
                 }
+            }
+
+            // 获取用户组对应的筛选条件列表
+            List<SearchConditionDto> searchConditionDtoList = userGroupConditionService.getSearchConditionByUserGroupId(id);
+            if (!CollectionUtils.isEmpty(searchConditionDtoList)){
+                userGroupDto.setSearchConditionDtoList(searchConditionDtoList);
             }
         }
         return userGroupDto;
@@ -288,9 +295,9 @@ public class UserGroupService {
      */
     private void executeGroupBatch(Integer userGroupId) {
         // 用户组条件
-        UserGroupCondition userGroupConditions = userGroupConditionService.selectUserGroupConditionByUserGroupId(userGroupId);
+        Map<String, List<SearchCondition>> searchConditionMap = userGroupConditionService.selectUserGroupConditionByUserGroupId(userGroupId);
         // 如果用户组条件不为空，查询条件下的获取用户ids
-        Set<Integer> userIdList = userService.selectUserListByCondition(userGroupConditions);
+        Set<Integer> userIdList = userService.selectUserListByCondition(searchConditionMap);
         // 权限 ids
         Set<Integer> permissionIds = userGroupPermissionDetailsService.getPermissionIdsByUserGroupId(userGroupId);
 

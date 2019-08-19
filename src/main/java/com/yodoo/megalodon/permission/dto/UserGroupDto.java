@@ -44,7 +44,12 @@ public class UserGroupDto extends BaseDto {
      */
     private List<UserDto> userDtoList;
 
-    public String getGroupCode() {
+    /**
+     * 用户组筛选条件详情
+     */
+     private List<SearchConditionDto> searchConditionDtoList;
+
+   public String getGroupCode() {
         return groupCode;
     }
 
@@ -95,6 +100,15 @@ public class UserGroupDto extends BaseDto {
 
     public UserGroupDto setUserDtoList(List<UserDto> userDtoList) {
         this.userDtoList = userDtoList;
+        return this;
+    }
+
+    public List<SearchConditionDto> getSearchConditionDtoList() {
+        return searchConditionDtoList;
+    }
+
+    public UserGroupDto setSearchConditionDtoList(List<SearchConditionDto> searchConditionDtoList) {
+        this.searchConditionDtoList = searchConditionDtoList;
         return this;
     }
 }

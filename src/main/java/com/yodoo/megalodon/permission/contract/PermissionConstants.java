@@ -25,4 +25,9 @@ public interface PermissionConstants {
      * 电话号码长度
      */
     Integer PHONE_LENGTH = 11;
+
+    /**
+     * 字符串中全是0到9数字
+     */
+    String SEARCH_CONDITION_VALUE = "[0-9]{1,}";
 }

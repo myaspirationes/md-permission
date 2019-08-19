@@ -9,6 +9,7 @@ import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.UserDto;
+import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
@@ -414,15 +415,51 @@ public class UserService {
 
     /**
      * 条件查询用户 TODO
-     * @param userGroupConditions
+     * @param searchConditionListMap
      * @return
      */
-    public Set<Integer> selectUserListByCondition(UserGroupCondition userGroupConditions) {
+    public Set<Integer> selectUserListByCondition(Map<String, List<SearchCondition>> searchConditionListMap) {
         Set<Integer> userIdList = new HashSet<>();
-        if (userGroupConditions != null && StringUtils.isNoneBlank(userGroupConditions.getOperator())){
-            List<User> userList = userMapper.selectByCondition(userGroupConditions.getOperator());
-            if (!CollectionUtils.isEmpty(userList)){
-                userIdList = userList.stream().filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+        if (!CollectionUtils.isEmpty(searchConditionListMap)){
+            Set<String> keySet = searchConditionListMap.keySet();
+            if (!CollectionUtils.isEmpty(keySet)){
+                StringBuilder requestSqlBuffer = new StringBuilder();
+                keySet.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(key -> {
+                            StringBuilder sqlBuffer = new StringBuilder();
+                            List<SearchCondition> searchConditionList = searchConditionListMap.get(key);
+                            if (!CollectionUtils.isEmpty(searchConditionList)){
+                                sqlBuffer.append(key);
+                                sqlBuffer.append(" ");
+                                sqlBuffer.append("IN");
+                                sqlBuffer.append("(");
+                                searchConditionList.stream()
+                                        .filter(Objects::nonNull)
+                                        .forEach(searchCondition -> {
+                                            if (searchCondition.getConditionValue().matches(PermissionConstants.SEARCH_CONDITION_VALUE)){
+                                                sqlBuffer.append(searchCondition.getConditionValue());
+                                            }else {
+                                                sqlBuffer.append("'");
+                                                sqlBuffer.append(searchCondition.getConditionValue());
+                                                sqlBuffer.append("'");
+                                            }
+                                            sqlBuffer.append(",");
+                                        });
+                                String substring = sqlBuffer.toString().substring(0, sqlBuffer.length() - 1);
+                                requestSqlBuffer.append(substring);
+                                requestSqlBuffer.append(")");
+                                requestSqlBuffer.append(" AND ");
+                            }
+
+                        });
+                if (StringUtils.isNoneBlank(requestSqlBuffer)){
+                    String requestSqlSubBuffer = requestSqlBuffer.toString().substring(0, requestSqlBuffer.length() - 5);
+                    List<User> userList = userMapper.selectByCondition(requestSqlSubBuffer);
+                    if (!CollectionUtils.isEmpty(userList)){
+                        userIdList = userList.stream().filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
+                    }
+                }
             }
         }
         return userIdList;

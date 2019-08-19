@@ -1,6 +1,9 @@
 package com.yodoo.megalodon.permission.entity;
 
 import com.yodoo.megalodon.permission.common.BaseEntity;
+import com.yodoo.megalodon.permission.dto.SearchConditionDto;
+
+import java.util.List;
 
 /**
  * @Description ：用户组表
@@ -18,6 +21,11 @@ public class UserGroup extends BaseEntity {
      * 用户组名称
      **/
     private String groupName;
+
+    /**
+     * 用户组所拥有的条件
+     */
+    private List<SearchConditionDto> searchConditionDtoList;
 
     public UserGroup() {
     }
@@ -41,5 +49,14 @@ public class UserGroup extends BaseEntity {
 
     public void setGroupName(String groupName) {
         this.groupName = groupName == null ? null : groupName.trim();
+    }
+
+    public List<SearchConditionDto> getSearchConditionDtoList() {
+        return searchConditionDtoList;
+    }
+
+    public UserGroup setSearchConditionDtoList(List<SearchConditionDto> searchConditionDtoList) {
+        this.searchConditionDtoList = searchConditionDtoList;
+        return this;
     }
 }
