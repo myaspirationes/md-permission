@@ -1,7 +1,10 @@
 package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.megalodon.permission.config.PermissionConfig;
-import com.yodoo.megalodon.permission.dto.*;
+import com.yodoo.megalodon.permission.dto.ActionPermissionInUserListDto;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetCompanyDetailsDto;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetGroupDetailsDto;
+import com.yodoo.megalodon.permission.dto.UserPermissionTargetUserDetailsDto;
 import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
@@ -51,10 +54,7 @@ public class UserPermissionDetailsService {
      * @return
      */
     public List<UserPermissionDetails> selectUserPermissionDetailsByUserId(Integer userId) {
-        Example example = new Example(UserPermissionDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userId",userId);
-        return userPermissionDetailsMapper.selectByExample(example);
+        return userPermissionDetailsMapper.selectUserPermissionDetailsByUserId(userId);
     }
 
     /**
@@ -130,6 +130,20 @@ public class UserPermissionDetailsService {
     }
 
     /**
+     * 通过ids 删除
+     * @param userPermissionIds
+     */
+    public void deleteUserPermissionDetailsByIds(Set<Integer> userPermissionIds){
+        if (!CollectionUtils.isEmpty(userPermissionIds)){
+            userPermissionIds.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(userPermissionId -> {
+                        userPermissionDetailsMapper.deleteByPrimaryKey(userPermissionId);
+                    });
+        }
+    }
+
+    /**
      * 变更权限
      * @Author houzhen
      * @Date 10:23 2019/8/6
@@ -140,15 +154,10 @@ public class UserPermissionDetailsService {
         if (userGroupId == null && userGroupId < 0) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
+        // 通过用户组获取用户权限ids
+        Set<Integer> userPermissionIds = userPermissionTargetUserGroupDetailsService.getUserPermissionIdsByUserGroupId(userGroupId);
         // 删除用户权限表数据
-        if (!CollectionUtils.isEmpty(userIds)){
-            userIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userId -> {
-                        // 先删除旧的数据
-                        return deleteUserPermissionDetailsByUserId(userId);
-                    }).filter(Objects::nonNull).count();
-        }
+        deleteUserPermissionDetailsByIds(userPermissionIds);
         // 用户ids和权限ids不为空
         Set<Integer> userPermissionDetailsIds = new HashSet<>();
         // 插入用户权限表数据
@@ -172,25 +181,6 @@ public class UserPermissionDetailsService {
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(userPermissionDetailsIds)){
             userPermissionTargetUserGroupDetailsService.updateUserPermissionTargetUserGroupDetails(userGroupId, userPermissionDetailsIds);
         }
-    }
-
-    /**
-     * 通过id 查询，统计不存在的数量
-     * @param userPermissionIds
-     * @return
-     */
-    public Long selectUserPermissionNoExistCountByIds(Set<Integer> userPermissionIds) {
-        Long count = null;
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            count = userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(id -> {
-                        return userPermissionDetailsMapper.selectByPrimaryKey(id);
-                    })
-                    .filter(userPermissionDetails -> userPermissionDetails == null)
-                    .count();
-        }
-        return count;
     }
 
     /**

@@ -9,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @Description ：目标用户组
@@ -58,9 +60,32 @@ public class UserPermissionTargetUserGroupDetailsService {
      * @param userGroupId
      */
     public Integer deleteUserPermissionTargetUserGroupDetailsByUserGroupId(Integer userGroupId) {
+        return userPermissionTargetUserGroupDetailsMapper.deleteByExample(getExample(userGroupId));
+    }
+
+    /**
+     *  通过用户组id查询用户权限id
+     * @param userGroupId
+     * @return
+     */
+    public Set<Integer> getUserPermissionIdsByUserGroupId(Integer userGroupId) {
+        List<UserPermissionTargetUserGroupDetails> userPermissionTargetUserGroupDetails = userPermissionTargetUserGroupDetailsMapper.selectByExample(getExample(userGroupId));
+        if (!CollectionUtils.isEmpty(userPermissionTargetUserGroupDetails)) {
+            return userPermissionTargetUserGroupDetails.stream()
+                    .filter(Objects::nonNull).map(UserPermissionTargetUserGroupDetails::getUserPermissionId).collect(Collectors.toSet());
+        }
+        return null;
+    }
+
+    /**
+     * 通过用户组id 获取查询条件
+     * @param userGroupId
+     * @return
+     */
+    private Example getExample(Integer userGroupId){
         Example example = new Example(UserPermissionTargetUserGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("userGroupId", userGroupId);
-        return userPermissionTargetUserGroupDetailsMapper.deleteByExample(example);
+        return example;
     }
 }

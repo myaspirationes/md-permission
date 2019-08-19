@@ -13,4 +13,11 @@
         <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 
+    <select id="selectUserPermissionDetailsByUserId" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from user_permission_details
+        where user_id = #{userId,jdbcType=INTEGER} group by permission_id
+    </select>
+
 </mapper>

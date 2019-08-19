@@ -48,7 +48,7 @@ public class MenuTreeService {
         // 查询全部菜单
         List<Menu> allMenuList = menuMapper.selectAll();
         if (CollectionUtils.isEmpty(allMenuList)) {
-            return null;
+            return new ArrayList<>();
         }
         // 排序树
         this.sortMenu(allMenuList);
@@ -70,7 +70,7 @@ public class MenuTreeService {
         // 查询全部菜单
         List<Menu> allMenuList = menuMapper.selectAll();
         if (CollectionUtils.isEmpty(allMenuList)) {
-            return null;
+            return new ArrayList<>();
         }
         // 查询权限菜单
         List<Menu> menuPermissionList = this.getPermissionMenu(allMenuList, userId);

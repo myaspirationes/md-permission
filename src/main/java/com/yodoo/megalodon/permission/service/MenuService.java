@@ -81,7 +81,6 @@ public class MenuService {
         Example example = new Example(Menu.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("menuCode", menuDto.getMenuCode());
-        example.and(criteria);
         List<Menu> menuList = menuMapper.selectByExample(example);
         if (!CollectionUtils.isEmpty(menuList)) {
             throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);

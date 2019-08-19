@@ -5,7 +5,6 @@ import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
-import com.yodoo.megalodon.permission.entity.PermissionGroup;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroup;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
@@ -59,9 +58,6 @@ public class UserGroupService {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private PermissionGroupDetailsService permissionGroupDetailsService;
 
     /**
      * 条件分页查询
@@ -167,10 +163,6 @@ public class UserGroupService {
         if (updateCount != null && updateCount > 0){
             updateUserGroupPermissionDetailsAndUserGroupConditionAndUserPermission(userGroup.getId(),userGroupDto.getPermissionGroupIds(),userGroupDto.getSearchConditionIds());
         }
-        // 权限组不为空，更新用户权限组详情
-       // if (updateCount != null && updateCount > 0){
-       //    userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroup.getId(),userGroupDto.getPermissionGroupIds());
-       // }
         return updateCount;
     }
 
@@ -191,8 +183,6 @@ public class UserGroupService {
                 }).filter(Objects::nonNull).collect(Collectors.toList());
 
         userGroupConditionService.updateUserGroupCondition(userGroupId,searchConditionList);
-        // 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
-        // updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(userGroupId,searchConditionList,permissionGroupIds);
     }
 
     /**
@@ -205,17 +195,11 @@ public class UserGroupService {
         if (userGroupId == null || userGroupId < 0){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        Set<Integer> userIds = userGroupDetailsService.selectUserIdsByUserGroupId(userGroupId);
+        Set<Integer> userPermissionDetailsIds = userPermissionTargetUserGroupDetailsService.getUserPermissionIdsByUserGroupId(userGroupId);
+        // 删除用户权限
+        userPermissionDetailsService.deleteUserPermissionDetailsByIds(userPermissionDetailsIds);
         // 删除用户组条件
         userGroupConditionService.deleteUserGroupConditionByUserGroupId(userGroupId);
-        // 删除用户权限
-        if (!CollectionUtils.isEmpty(userIds)){
-            userIds.stream()
-                    .filter(Objects::nonNull)
-                    .forEach(userId -> {
-                        userPermissionDetailsService.deleteUserPermissionDetailsByUserId(userId);
-                    });
-        }
         // 用户与用户组关系表
         userGroupDetailsService.deleteUserGroupDetailsByUserGroupId(userGroupId);
         // 用户管理用户组权限表
@@ -287,46 +271,6 @@ public class UserGroupService {
 
         // 维护用户权限详情和用户组与用户权限关系表
         userPermissionDetailsService.updateUserPermission(userGroupId,userIdList,permissionIds);
-    }
-
-    /**
-     * 根据条件查询适合组的用户，添加用户权限表，用户管理用户组权限表数据
-     * @param userGroupId
-     * @param userGroupConditions
-     */
-    @Deprecated
-    private void updateUserPermissionAndUserPermissionTargetUserGroupDetailsByCondition(Integer userGroupId, UserGroupCondition userGroupConditions, Set<Integer> permissionGroupIds) {
-        // 用户列表
-        Set<Integer> userIdList = userService.selectUserListByCondition(userGroupConditions);
-        Set<Integer> userIds = new HashSet<>();
-        if (!CollectionUtils.isEmpty(userIdList)){
-
-        }
-        // 权限组ids
-        Set<Integer> permissionGroupIdList = new HashSet<>();
-        if (!CollectionUtils.isEmpty(permissionGroupIds)){
-            List<PermissionGroup> collect = permissionGroupIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(permissionGroupId -> {
-                        return permissionGroupService.selectByPrimaryKey(permissionGroupId);
-                    }).filter(Objects::nonNull).collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(collect)){
-                permissionGroupIdList = collect.stream().filter(Objects::nonNull).map(PermissionGroup::getId).collect(Collectors.toSet());
-            }
-        }
-        // 如果权限组列表不为空，更新用户组权限组关系数据
-        if (!CollectionUtils.isEmpty(permissionGroupIdList)){
-            userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroupId, permissionGroupIdList);
-        }
-        // 查询权限组对应权限的ids
-        Set<Integer> permissionIds = new HashSet<>();
-        if (!CollectionUtils.isEmpty(permissionGroupIdList)){
-            permissionIds = permissionGroupDetailsService.getPermissionIds(permissionGroupIdList);
-        }
-        // 更新用户权限，用户管理用户组权限表数据
-        if (!CollectionUtils.isEmpty(userIds) && !CollectionUtils.isEmpty(permissionIds)){
-            userPermissionDetailsService.updateUserPermission(userGroupId,userIds,permissionIds);
-        }
     }
 
     /**

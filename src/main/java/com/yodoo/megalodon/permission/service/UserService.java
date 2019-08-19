@@ -8,20 +8,16 @@ import com.yodoo.feikongbao.provisioning.domain.system.service.GroupsService;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.contract.PermissionConstants;
-import com.yodoo.megalodon.permission.dto.SearchConditionDto;
 import com.yodoo.megalodon.permission.dto.UserDto;
-import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.User;
 import com.yodoo.megalodon.permission.entity.UserGroupCondition;
-import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
 import com.yodoo.megalodon.permission.enums.UserStatusEnum;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserMapper;
 import com.yodoo.megalodon.permission.util.Md5Util;
-import com.yodoo.megalodon.permission.util.RequestPrecondition;
-import com.yodoo.megalodon.permission.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -70,12 +66,6 @@ public class UserService {
     @Autowired
     private GroupsService groupsService;
 
-    @Autowired
-    private UserGroupPermissionDetailsService userGroupPermissionDetailsService;
-
-    @Autowired
-    private UserPermissionTargetUserGroupDetailsService userPermissionTargetUserGroupDetailsService;
-
     /**
      * 根据账号查询用户
      *
@@ -85,11 +75,12 @@ public class UserService {
     public User getUserByAccount(String account) {
         logger.info("UserService.getUserByAccount account:{}", account);
         // 验证参数
-        RequestPrecondition.checkArguments(!StringUtils.isContainEmpty(account));
+        if (StringUtils.isBlank(account)){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
         Example example = new Example(User.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("account", account);
-        example.and(criteria);
         return userMapper.selectOneByExample(example);
     }
 
@@ -102,23 +93,23 @@ public class UserService {
         Example example = new Example(User.class);
         Example.Criteria criteria = example.createCriteria();
         // 账号
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getAccount())){
+        if (StringUtils.isNoneBlank(userDto.getAccount())){
             criteria.andEqualTo("account",userDto.getAccount());
         }
         // 用户名称
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getName())){
+        if (StringUtils.isNoneBlank(userDto.getName())){
             criteria.andEqualTo("name",userDto.getName());
         }
         // 邮箱
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getEmail())){
+        if (StringUtils.isNoneBlank(userDto.getEmail())){
             criteria.andEqualTo("email",userDto.getEmail());
         }
         // 区域
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getRegion())){
+        if (StringUtils.isNoneBlank(userDto.getRegion())){
             criteria.andEqualTo("region",userDto.getRegion());
         }
         // 岗位
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getPost())){
+        if (StringUtils.isNoneBlank(userDto.getPost())){
             criteria.andEqualTo("post",userDto.getPost());
         }
         // 性别：0 没指定性别，1 男， 2 女
@@ -126,7 +117,7 @@ public class UserService {
             criteria.andEqualTo("sex",userDto.getSex());
         }
         // 电话
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getPhone())){
+        if (StringUtils.isNoneBlank(userDto.getPhone())){
             criteria.andEqualTo("phone",userDto.getPhone());
         }
         Page<?> pages = PageHelper.startPage(userDto.getPageNum(), userDto.getPageSize());
@@ -428,7 +419,7 @@ public class UserService {
      */
     public Set<Integer> selectUserListByCondition(UserGroupCondition userGroupConditions) {
         Set<Integer> userIdList = new HashSet<>();
-        if (userGroupConditions != null && org.apache.commons.lang3.StringUtils.isNoneBlank(userGroupConditions.getOperator())){
+        if (userGroupConditions != null && StringUtils.isNoneBlank(userGroupConditions.getOperator())){
             List<User> userList = userMapper.selectByCondition(userGroupConditions.getOperator());
             if (!CollectionUtils.isEmpty(userList)){
                 userIdList = userList.stream().filter(Objects::nonNull).map(User::getId).collect(Collectors.toSet());
@@ -517,19 +508,19 @@ public class UserService {
             user.setParentId(userDto.getParentId());
         }
         // 用户名称
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getName())){
+        if (StringUtils.isNoneBlank(userDto.getName())){
             user.setName(userDto.getName());
         }
         // 邮箱
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getEmail())){
+        if (StringUtils.isNoneBlank(userDto.getEmail())){
             user.setEmail(userDto.getEmail());
         }
         // 区域
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getRegion())){
+        if (StringUtils.isNoneBlank(userDto.getRegion())){
             user.setRegion(userDto.getRegion());
         }
         // 岗位
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getPost())){
+        if (StringUtils.isNoneBlank(userDto.getPost())){
             user.setPost(userDto.getPost());
         }
         // 性别：0 没指定性别，1 男， 2 女
@@ -541,42 +532,8 @@ public class UserService {
             user.setBirthday(userDto.getBirthday());
         }
         // 电话
-        if (org.apache.commons.lang3.StringUtils.isNoneBlank(userDto.getPhone())){
+        if (StringUtils.isNoneBlank(userDto.getPhone())){
             user.setPhone(userDto.getPhone());
-        }
-    }
-
-    /**
-     * 添加用户权限详情 TODO
-     * @param userId
-     * @param permissionIds
-     */
-    private void updateUserPermissionDetails(Integer userId, Set<Integer> permissionIds, Set<Integer> userGroupIds) {
-        // 查询用户组所属的权限
-        Map<Integer, Set<Integer>>  permissionIdMap = userGroupPermissionDetailsService.getPermissionIdsByUserGroupIds(userGroupIds);
-        // 把用户选择的权限id和用户所属的用户组权限合并
-        if (!CollectionUtils.isEmpty(permissionIdMap)){
-            for (Integer userGroupId : permissionIdMap.keySet()) {
-                Set<Integer> permissionIdList = permissionIdMap.get(userGroupId);
-                permissionIds.addAll(permissionIdList);
-            }
-        }
-        // 对于用户权限表，先删除再插入
-        userPermissionDetailsService.updateUserPermission(userId, permissionIds);
-
-        // 把用户所有的用户权限查询出来
-        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionDetailsList) && !CollectionUtils.isEmpty(permissionIdMap)){
-            for (Integer userGroupId : permissionIdMap.keySet()) {
-                Set<Integer> permissionIdList = permissionIdMap.get(userGroupId);
-                userPermissionDetailsList.stream()
-                        .filter(Objects::nonNull)
-                        .forEach(userPermissionDetails -> {
-                            if (permissionIdList.contains(userPermissionDetails.getId())){
-                                userPermissionTargetUserGroupDetailsService.insertUserPermissionDetails(userGroupId,userPermissionDetails.getId());
-                            }
-                        });
-            }
         }
     }
 
@@ -585,8 +542,8 @@ public class UserService {
      * @param userDto
      */
     private void addUserParameterCheck(UserDto userDto) {
-        if (userDto == null || org.apache.commons.lang3.StringUtils.isBlank(userDto.getAccount()) || org.apache.commons.lang3.StringUtils.isBlank(userDto.getName())
-                || org.apache.commons.lang3.StringUtils.isBlank(userDto.getEmail()) || org.apache.commons.lang3.StringUtils.isBlank(userDto.getPhone())){
+        if (userDto == null || StringUtils.isBlank(userDto.getAccount()) || StringUtils.isBlank(userDto.getName())
+                || StringUtils.isBlank(userDto.getEmail()) || StringUtils.isBlank(userDto.getPhone())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 邮件和电话校验,权限，权限组，权限
@@ -606,8 +563,8 @@ public class UserService {
      * @return
      */
     private User editUserParameterCheck(UserDto userDto) {
-        if (userDto == null || userDto.getId() == null || userDto.getId() < 0 || org.apache.commons.lang3.StringUtils.isBlank(userDto.getName())
-                || org.apache.commons.lang3.StringUtils.isBlank(userDto.getEmail()) || org.apache.commons.lang3.StringUtils.isBlank(userDto.getPhone())){
+        if (userDto == null || userDto.getId() == null || userDto.getId() < 0 || StringUtils.isBlank(userDto.getName())
+                || StringUtils.isBlank(userDto.getEmail()) || StringUtils.isBlank(userDto.getPhone())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
 

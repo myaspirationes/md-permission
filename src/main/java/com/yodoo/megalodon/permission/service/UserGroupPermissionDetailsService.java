@@ -105,40 +105,6 @@ public class UserGroupPermissionDetailsService {
     }
 
     /**
-     * 通过用户组id 查询权限组id,再通过权限组id查询权限详情表获取 权限 id
-     * @param userGroupIds
-     * @return
-     */
-    public Map<Integer, Set<Integer>> getPermissionIdsByUserGroupIds(Set<Integer> userGroupIds) {
-        // 每个用户组对应的权限ids
-        Map<Integer, Set<Integer>> permissionIdMap = new HashMap<>(userGroupIds.size());
-
-        if (!CollectionUtils.isEmpty(userGroupIds)){
-            Set<Integer> permissionGroupIdList = new HashSet<>();
-                    userGroupIds.stream()
-                    .filter(Objects::nonNull)
-                    .forEach(userGroupId -> {
-                        // 通过用户组id  查询权限组id
-                        Example example = getExample(userGroupId);
-                        List<UserGroupPermissionDetails> userGroupPermissionDetailsList = userGroupPermissionDetailsMapper.selectByExample(example);
-
-                        if (!CollectionUtils.isEmpty(userGroupPermissionDetailsList)){
-                            // 获取权限组ids
-                            Set<Integer> permissionGroupIds = userGroupPermissionDetailsList.stream().filter(Objects::nonNull).map(UserGroupPermissionDetails::getPermissionGroupId).filter(Objects::nonNull).collect(Collectors.toSet());
-                            if (!CollectionUtils.isEmpty(permissionGroupIds)){
-                                // 通过权限组id 查询权限id
-                                Set<Integer> permissionIds = permissionGroupDetailsService.getPermissionIds(permissionGroupIds);
-                                if (!CollectionUtils.isEmpty(permissionIds)){
-                                    permissionIdMap.put(userGroupId, permissionIds);
-                                }
-                            }
-                        }
-                    });
-        }
-        return permissionIdMap;
-    }
-
-    /**
      * 通过用户组id删除
      * @param userGroupId
      * @return
