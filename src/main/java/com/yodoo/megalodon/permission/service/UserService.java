@@ -433,8 +433,23 @@ public class UserService {
      * @param id
      * @return
      */
-    private User selectByPrimaryKey(Integer id) {
+    public User selectByPrimaryKey(Integer id) {
         return userMapper.selectByPrimaryKey(id);
+    }
+
+    /**
+     * 通过用户id 查询
+     * @param requestUserId
+     * @return
+     */
+    public UserDto getUserDtoByUserId(Integer requestUserId) {
+        User user = selectByPrimaryKey(requestUserId);
+        if (user != null){
+            UserDto userDto = new UserDto();
+            BeanUtils.copyProperties(user, userDto);
+            return userDto;
+        }
+        return null;
     }
 
     /**
@@ -456,21 +471,6 @@ public class UserService {
                        }).filter(Objects::nonNull)
                        .collect(Collectors.toList());
            }
-        }
-        return null;
-    }
-
-    /**
-     * 通过用户id 查询
-     * @param requestUserId
-     * @return
-     */
-    private UserDto getUserDtoByUserId(Integer requestUserId) {
-        User user = selectByPrimaryKey(requestUserId);
-        if (user != null){
-            UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(user, userDto);
-            return userDto;
         }
         return null;
     }

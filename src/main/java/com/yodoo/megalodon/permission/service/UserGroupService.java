@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
+import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroup;
@@ -226,6 +227,33 @@ public class UserGroupService {
                     }).filter(Objects::nonNull).collect(Collectors.toList());
         }
         return null;
+    }
+
+    /**
+     * 通过用户组id查询用户组详情
+     * @return
+     */
+    public UserGroupDto getUserGroupDetailsById(Integer id) {
+        UserGroupDto userGroupDto = new UserGroupDto();
+        // 查询用户组
+        UserGroup userGroup = selectByPrimaryKey(id);
+        if (null != userGroup){
+            BeanUtils.copyProperties(userGroup, userGroupDto);
+            // 查询用户ids
+            Set<Integer> userIds = userGroupDetailsService.selectUserIdsByUserGroupId(id);
+            if (!CollectionUtils.isEmpty(userIds)){
+                List<UserDto> userDtoList = userIds.stream()
+                        .filter(Objects::nonNull)
+                        .map(userId -> {
+                            // 查询用户
+                            return userService.getUserDtoByUserId(userId);
+                        }).filter(Objects::nonNull).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(userDtoList)){
+                    userGroupDto.setUserDtoList(userDtoList);
+                }
+            }
+        }
+        return userGroupDto;
     }
 
     /**

@@ -149,6 +149,16 @@ public class UserManagerApi {
     }
 
     /**
+     * 通过用户组id查询用户组详情
+     * @param id
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public UserGroupDto getUserGroupDetailsById(Integer id){
+        return userGroupService.getUserGroupDetailsById(id);
+    }
+
+    /**
      * 用户组批处理
      * 1、维护用户与用户组关系表
      * 2、维护用户权限表
