@@ -2,6 +2,7 @@ package com.yodoo.megalodon.permission.common;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -87,14 +88,30 @@ public class BaseEntity {
     public void setCreatedBy() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            this.createdBy = (Integer) authentication.getPrincipal();
+            Object principal = authentication.getPrincipal();
+            Integer userId = null;
+            if (principal instanceof User){
+                User user = (User) authentication.getPrincipal();
+                userId = Integer.valueOf(user.getUsername());
+            }else {
+                userId = (Integer) authentication.getPrincipal();
+            }
+            this.createdBy = userId;
         }
     }
 
     public void setLastModifiedBy() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
-            this.lastModifiedBy = (Integer) authentication.getPrincipal();
+            Integer userId = null;
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof User){
+                User user = (User) authentication.getPrincipal();
+                userId = Integer.valueOf(user.getUsername());
+            }else {
+                userId = (Integer) authentication.getPrincipal();
+            }
+            this.lastModifiedBy = userId;
             this.lastModifiedTime = Instant.now();
         }
     }
