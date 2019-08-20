@@ -60,6 +60,16 @@ public class UserManagerApi {
     }
 
     /**
+     * 修改密码
+     * @param userDto
+     * @return
+     */
+    @PreAuthorize("hasAnyAuthority('user_manage')")
+    public Integer updateUserPassword(UserDto userDto){
+        return userService.updateUserPassword(userDto);
+    }
+
+    /**
      * 重置密码：yodoo123
      * @param userId
      * @return

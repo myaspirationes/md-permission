@@ -168,6 +168,20 @@ public class UserService {
     }
 
     /**
+     * 修改密码
+     * @param userDto
+     * @return
+     */
+    public Integer updateUserPassword(UserDto userDto) {
+        if (userDto == null || userDto.getId() == null || userDto.getId() < 0 || StringUtils.isBlank(userDto.getPassword())){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        User user = checkUserExistById(userDto.getId());
+        user.setPassword(Md5Util.md5Encode(userDto.getPassword()));
+        return userMapper.updateByPrimaryKeySelective(user);
+    }
+
+    /**
      * 重置密码
      * @param id
      * @return

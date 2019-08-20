@@ -53,8 +53,13 @@ public class PermissionConfig {
         return new DataSourceTransactionManager(provisioningDataSource);
     }
 
+    /**
+     * @Qualifier(PERMISSION_SQL_SESSION_FACTORY_BEAN_NAME)
+     * @param provisioningDataSource
+     * @return
+     * @throws Exception
+     */
     @Bean(PERMISSION_SQL_SESSION_FACTORY_BEAN_NAME)
-    //@Qualifier(PERMISSION_SQL_SESSION_FACTORY_BEAN_NAME)
     @Primary
     public SqlSessionFactory permissionSqlSessionFactory(DataSource provisioningDataSource) throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();

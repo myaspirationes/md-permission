@@ -81,24 +81,6 @@ public class UserGroupConditionService {
         }
         // 插入
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(searchConditionList)){
-//            StringBuilder sqlBuffer = new StringBuilder();
-//            searchConditionList.stream()
-//                    .filter(Objects::nonNull)
-//                    .forEach(searchCondition -> {
-//                        sqlBuffer.append(searchCondition.getConditionName());
-//                        sqlBuffer.append(" ");
-//                        sqlBuffer.append(searchCondition.getConditionCode());
-//                        sqlBuffer.append(" ");
-//                        sqlBuffer.append(searchCondition.getConditionValue());
-//                        sqlBuffer.append(" and ");
-//                    });
-//            String sqlBufferString = sqlBuffer.toString();
-//            String sqlRequest = sqlBufferString.substring(0, sqlBufferString.length() - 5);
-//
-//            UserGroupCondition userGroupCondition = new UserGroupCondition();
-//            userGroupCondition.setUserGroupId(userGroupId);
-//            userGroupCondition.setOperator(sqlRequest);
-//            userGroupConditionMapper.insertSelective(userGroupCondition);
             searchConditionList.stream()
                     .filter(Objects::nonNull)
                     .map(searchCondition -> {
@@ -108,9 +90,9 @@ public class UserGroupConditionService {
                         // 用户组id
                         userGroupCondition.setUserGroupId(userGroupId);
                         // 运算符号
-                        // userGroupCondition.setOperator("");
+                         userGroupCondition.setOperator(searchCondition.getConditionName());
                         // 匹配值
-                        // userGroupCondition.setMatchValue("");
+                         userGroupCondition.setMatchValue(searchCondition.getConditionValue());
                         return userGroupConditionMapper.insertSelective(userGroupCondition);
                     }).filter(Objects::nonNull).count();
         }

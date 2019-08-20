@@ -86,7 +86,7 @@ public class JsonUtils {
      * json string convert to map with javaBean
      */
     public static <T> Map<String, T> json2map(String jsonStr, Class<T> clazz) {
-        Map<String, T> result = new HashMap<String, T>();
+        Map<String, T> result = new HashMap<String, T>(16);
         try {
             Map<String, Map<String, Object>> map = OBJECT_MAPPER.readValue(jsonStr, new TypeReference<Map<String, T>>() {
             });
