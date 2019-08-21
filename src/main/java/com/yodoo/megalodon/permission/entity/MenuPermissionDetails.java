@@ -19,6 +19,14 @@ public class MenuPermissionDetails extends BaseEntity {
      **/
     private Integer permissionId;
 
+    public MenuPermissionDetails() {
+    }
+
+    public MenuPermissionDetails(Integer menuId, Integer permissionId) {
+        this.menuId = menuId;
+        this.permissionId = permissionId;
+    }
+
     public Integer getMenuId() {
         return menuId;
     }

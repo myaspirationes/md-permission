@@ -15,9 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -35,64 +33,67 @@ public class UserPermissionTargetUserDetailsService {
     @Autowired
     private UserPermissionDetailsService userPermissionDetailsService;
 
+    @Autowired
+    private UserService userService;
+
     /**
      * 更新用户管理目标用户数据
      * @param userPermissionTargetDto
      */
     public void updateUserPermissionTargetUser(UserPermissionTargetDto userPermissionTargetDto) {
-        // 参数判断
-        if (userPermissionTargetDto.getUserId() == null) {
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
-        if (userPermissionDetails == null){
-            throw new PermissionException(PermissionBundleKey.USER_PERMISSION_NOT_EXIST, PermissionBundleKey.USER_PERMISSION_NOT_EXIST_MSG);
-        }
-        // 通过用户权限 ids 删除 用户管理目标用户 数据
-        Example example = new Example(UserPermissionTargetUserDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId", userPermissionDetails.getId());
+        // 参数校验
+        updateUserPermissionTargetUserParameterCheck(userPermissionTargetDto);
+        // 删除
+        Example example = getExampleByUserIdAndPermissionId(new UserPermissionDetails(userPermissionTargetDto.getUserId(), userPermissionTargetDto.getPermissionId()));
         userPermissionTargetUserDetailsMapper.deleteByExample(example);
         // 增加修改后的权限
-        if (!CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
-            userPermissionTargetDto.getTargetIds().stream()
-                    .filter(Objects::nonNull)
-                    .map(userId ->{
-                        return userPermissionTargetUserDetailsMapper.insertSelective(new UserPermissionTargetUserDetails(userPermissionDetails.getId(), userId));
-                    }).count();
-        }
+        userPermissionTargetDto.getTargetIds().stream()
+                .filter(Objects::nonNull)
+                .map(targetUserId ->{
+                    UserPermissionTargetUserDetails userPermissionTargetUserDetails = new UserPermissionTargetUserDetails();
+                    userPermissionTargetUserDetails.setUserId(userPermissionTargetDto.getUserId());
+                    userPermissionTargetUserDetails.setPermissionId(userPermissionTargetDto.getPermissionId());
+                    userPermissionTargetUserDetails.setTargetUserId(targetUserId);
+                    return userPermissionTargetUserDetailsMapper.insertSelective(userPermissionTargetUserDetails);
+                }).count();
     }
 
     /**
      * 通过用户权限id查询获取用户ids
-     * @param userPermissionId
+     * @param userPermissionIdList
      * @return
      */
-    public List<Integer> getUserIdsByUserPermissionId(Integer userPermissionId) {
-        Example example = getExample(userPermissionId);
-        List<UserPermissionTargetUserDetails> targetUserList = userPermissionTargetUserDetailsMapper.selectByExample(example);
-        List<Integer> userIds = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(targetUserList)){
-            userIds = targetUserList.stream()
+    public Set<Integer> getUserIdsByUserIdAndPermissionId(List<UserPermissionDetails> userPermissionIdList) {
+        Set<Integer> targetUserIds = new HashSet<>();
+        if (!CollectionUtils.isEmpty(userPermissionIdList)){
+            userPermissionIdList.stream()
                     .filter(Objects::nonNull)
-                    .map(UserPermissionTargetUserDetails::getUserId)
-                    .collect(Collectors.toList());
+                    .forEach(userPermissionDetails -> {
+                        Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
+                        List<UserPermissionTargetUserDetails> list = userPermissionTargetUserDetailsMapper.selectByExample(example);
+                        if (!CollectionUtils.isEmpty(list)){
+                            Set<Integer> userIds = list.stream().filter(Objects::nonNull).map(UserPermissionTargetUserDetails::getTargetUserId).collect(Collectors.toSet());
+                            if (!CollectionUtils.isEmpty(userIds)){
+                                targetUserIds.addAll(userIds);
+                            }
+                        }
+                    });
         }
-        return userIds;
+        return targetUserIds;
     }
 
     /**
-     * 通过用户权限 ids 查询目标用户
-     * @param userPermissionIds
+     * 通过用户id 和 权限 id 查询目标用户
+     * @param userPermissionDetailsList
      * @return
      */
-    public List<UserPermissionTargetUserDetailsDto> getTargetUserDetailsByUserPermissionIds(List<Integer> userPermissionIds) {
+    public List<UserPermissionTargetUserDetailsDto> getTargetUserDetailsByUserIdPermissionId(List<UserPermissionDetails> userPermissionDetailsList) {
         List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDtoList = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            userPermissionIds.stream()
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
+            userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        Example example = getExample(userPermissionId);
+                    .map(userPermissionDetails -> {
+                        Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
                         List<UserPermissionTargetUserDetails> targetUserList = userPermissionTargetUserDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(targetUserList)){
                             List<UserPermissionTargetUserDetailsDto> collect = targetUserList.stream()
@@ -112,10 +113,43 @@ public class UserPermissionTargetUserDetailsService {
         return userPermissionTargetUserDetailsDtoList;
     }
 
-    private Example getExample(Integer userPermissionId){
+    /**
+     * 更新目标用户参数校验
+     * @param userPermissionTargetDto
+     */
+    private void updateUserPermissionTargetUserParameterCheck(UserPermissionTargetDto userPermissionTargetDto) {
+        // 非空校验
+        if (userPermissionTargetDto == null || userPermissionTargetDto.getUserId() == null || userPermissionTargetDto.getUserId() < 0
+                || userPermissionTargetDto.getPermissionId() == null || userPermissionTargetDto.getPermissionId() < 0
+                || CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        // 查询用户权限是否存在
+        List<UserPermissionDetails> list = userPermissionDetailsService.selectUserPermissionDetailsByUserIdAndPermissionId(new UserPermissionDetails(userPermissionTargetDto.getUserId(), userPermissionTargetDto.getPermissionId()));
+        if (CollectionUtils.isEmpty(list)){
+            throw new PermissionException(PermissionBundleKey.USER_PERMISSION_NOT_EXIST, PermissionBundleKey.USER_PERMISSION_NOT_EXIST_MSG);
+        }
+        // 查询用户是否存在
+        Long userNoExistCount = userService.selectUserNoExistCountByIds(userPermissionTargetDto.getTargetIds());
+        if (userNoExistCount != null && userNoExistCount > 0){
+            throw new PermissionException(PermissionBundleKey.USER_NOT_EXIST, PermissionBundleKey.USER_NOT_EXIST_MSG);
+        }
+    }
+
+    /**
+     * 获取 example
+     * @param userPermissionDetails
+     * @return
+     */
+    private Example getExampleByUserIdAndPermissionId(UserPermissionDetails userPermissionDetails) {
         Example example = new Example(UserPermissionTargetUserDetails.class);
         Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId", userPermissionId);
+        if (userPermissionDetails.getUserId() != null && userPermissionDetails.getUserId() > 0){
+            criteria.andEqualTo("userId", userPermissionDetails.getUserId());
+        }
+        if (userPermissionDetails.getPermissionId() != null && userPermissionDetails.getPermissionId() > 0){
+            criteria.andEqualTo("permissionId", userPermissionDetails.getPermissionId());
+        }
         return example;
     }
 }

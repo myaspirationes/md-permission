@@ -49,6 +49,9 @@ public class PermissionService {
     @Autowired
     private PermissionGroupDetailsService permissionGroupDetailsService;
 
+    @Autowired
+    private UserGroupService userGroupService;
+
     /**
      * 分页查询
      * @Author houzhen
@@ -57,7 +60,6 @@ public class PermissionService {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public PageInfoDto<PermissionDto> queryPermissionList(PermissionDto permissionDto) {
         logger.info("PermissionService.queryPermissionList permissionDto:{}", JsonUtils.obj2json(permissionDto));
-        List<PermissionDto> responseLst = new ArrayList<>();
         Example example = new Example(Permission.class);
         Example.Criteria criteria = example.createCriteria();
         if (!StringUtils.isEmpty(permissionDto.getPermissionCode())) {
@@ -66,17 +68,9 @@ public class PermissionService {
         if (!StringUtils.isEmpty(permissionDto.getPermissionName())) {
             criteria.andLike("permissionName", "%" + permissionDto.getPermissionName() + "%");
         }
-        example.and(criteria);
         Page<?> pages = PageHelper.startPage(permissionDto.getPageNum(), permissionDto.getPageSize());
         List<Permission> permissionList = permissionMapper.selectByExample(example);
-        if (!CollectionUtils.isEmpty(permissionList)) {
-            responseLst = permissionList.stream().map(permission -> {
-                PermissionDto dto = new PermissionDto();
-                BeanUtils.copyProperties(permission, dto);
-                return dto;
-            }).collect(Collectors.toList());
-        }
-        return new PageInfoDto<PermissionDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), responseLst);
+        return new PageInfoDto<PermissionDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), copyProperties(permissionList));
     }
 
     /**
@@ -136,7 +130,11 @@ public class PermissionService {
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public Integer deletePermission(Integer id){
         deleteParameterCheck(id);
-        return permissionMapper.deleteByPrimaryKey(id);
+        Integer count = permissionMapper.deleteByPrimaryKey(id);
+        // 更新批处理
+        userGroupService.userGroupBatchProcessing(null);
+
+        return count;
     }
 
     /**
@@ -156,7 +154,6 @@ public class PermissionService {
     **/
     public List<PermissionDto> getAvailablePermissionByUserId(Integer userId) {
         logger.info("PermissionService.getAvailablePermissionByUserId userId:{}", userId);
-        List<PermissionDto> responseList = new ArrayList<>();
         if (userId == null) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
@@ -172,41 +169,14 @@ public class PermissionService {
         } else {
             availablePermissionList = permissionMapper.selectAll();
         }
-        if (!CollectionUtils.isEmpty(availablePermissionList)) {
-            responseList = availablePermissionList.stream().map(permission -> {
-                PermissionDto dto = new PermissionDto();
-                BeanUtils.copyProperties(permission, dto);
-                return dto;
-            }).collect(Collectors.toList());
-        }
-        return responseList;
+        return copyProperties(availablePermissionList);
     }
 
     /**
-     * 删除校验
-     * @param permissionId
+     * 通过用户id查询权限
+     * @param userId
+     * @return
      */
-    private void deleteParameterCheck(Integer permissionId) {
-        if (permissionId == null || permissionId < 0){
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByPermissionId(permissionId);
-        List<PermissionGroupDetails> permissionGroupDetailsList = permissionGroupDetailsService.selectPermissionGroupDetailsByPermissionId(permissionId);
-        if (!CollectionUtils.isEmpty(userPermissionDetailsList) || !CollectionUtils.isEmpty(permissionGroupDetailsList)){
-            throw new PermissionException(PermissionBundleKey.THE_DATA_IS_STILL_IN_USE, PermissionBundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
-        }
-    }
-
-    private Permission getPermissionByCode(String permissionCode) {
-        RequestPrecondition.checkArgumentsNotEmpty(permissionCode);
-        // 查询code是否存在
-        Example example = new Example(Permission.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("permissionCode", permissionCode);
-        example.and(criteria);
-        return permissionMapper.selectOneByExample(example);
-    }
-
     public List<Permission> selectPermissionByUserId(Integer userId) {
         if (userId == null || userId < 0) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
@@ -239,5 +209,60 @@ public class PermissionService {
                     .count();
         }
         return count;
+    }
+
+    /**
+     * 复制
+     * @param permissionList
+     * @return
+     */
+    private List<PermissionDto> copyProperties(List<Permission> permissionList){
+        if (!CollectionUtils.isEmpty(permissionList)){
+            return permissionList.stream()
+                    .filter(Objects::nonNull)
+                    .map(permission -> {
+                        return copyProperties(permission);
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    /**
+     * 复制
+     * @param permission
+     * @return
+     */
+    private PermissionDto copyProperties(Permission permission){
+        if (permission != null){
+            PermissionDto permissionDto = new PermissionDto();
+            BeanUtils.copyProperties(permission, permissionDto);
+            return permissionDto;
+        }
+        return null;
+    }
+
+    /**
+     * 删除校验
+     * @param permissionId
+     */
+    private void deleteParameterCheck(Integer permissionId) {
+        if (permissionId == null || permissionId < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByPermissionId(permissionId);
+        List<PermissionGroupDetails> permissionGroupDetailsList = permissionGroupDetailsService.selectPermissionGroupDetailsByPermissionId(permissionId);
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList) || !CollectionUtils.isEmpty(permissionGroupDetailsList)){
+            throw new PermissionException(PermissionBundleKey.THE_DATA_IS_STILL_IN_USE, PermissionBundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
+        }
+    }
+
+    private Permission getPermissionByCode(String permissionCode) {
+        RequestPrecondition.checkArgumentsNotEmpty(permissionCode);
+        // 查询code是否存在
+        Example example = new Example(Permission.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("permissionCode", permissionCode);
+        example.and(criteria);
+        return permissionMapper.selectOneByExample(example);
     }
 }

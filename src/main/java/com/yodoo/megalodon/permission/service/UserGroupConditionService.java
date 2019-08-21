@@ -104,8 +104,7 @@ public class UserGroupConditionService {
      * @return
      */
     public Integer deleteUserGroupConditionByUserGroupId(Integer userGroupId) {
-        Example example = getExampleByUserGroupId(userGroupId);
-        return userGroupConditionMapper.deleteByExample(example);
+        return userGroupConditionMapper.deleteByExample(getExampleByUserGroupId(userGroupId));
     }
 
     /**

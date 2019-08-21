@@ -10,37 +10,44 @@ import com.yodoo.megalodon.permission.common.BaseEntity;
 public class UserPermissionTargetUserDetails extends BaseEntity {
 
     /**
-     * 用户权限id
-     **/
-    private Integer userPermissionId;
-
-    /**
      * 用户id
      **/
     private Integer userId;
 
-    public UserPermissionTargetUserDetails() {
-    }
+    /**
+     * 权限id
+     **/
+    private Integer permissionId;
 
-    public UserPermissionTargetUserDetails(Integer userPermissionId, Integer userId) {
-        this.userPermissionId = userPermissionId;
-        this.userId = userId;
-    }
-
-    public Integer getUserPermissionId() {
-        return userPermissionId;
-    }
-
-    public void setUserPermissionId(Integer userPermissionId) {
-        this.userPermissionId = userPermissionId;
-    }
+    /**
+     * 目标用户id
+     */
+    private Integer targetUserId;
 
     public Integer getUserId() {
         return userId;
     }
 
-    public void setUserId(Integer userId) {
+    public UserPermissionTargetUserDetails setUserId(Integer userId) {
         this.userId = userId;
+        return this;
     }
 
+    public Integer getPermissionId() {
+        return permissionId;
+    }
+
+    public UserPermissionTargetUserDetails setPermissionId(Integer permissionId) {
+        this.permissionId = permissionId;
+        return this;
+    }
+
+    public Integer getTargetUserId() {
+        return targetUserId;
+    }
+
+    public UserPermissionTargetUserDetails setTargetUserId(Integer targetUserId) {
+        this.targetUserId = targetUserId;
+        return this;
+    }
 }

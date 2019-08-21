@@ -10,28 +10,44 @@ import com.yodoo.megalodon.permission.common.BaseDto;
 public class UserPermissionTargetGroupDetailsDto extends BaseDto {
 
     /**
-     * 用户权限id
-     **/
-    private Integer userPermissionId;
+     * 用户id
+     */
+    private Integer userId;
 
     /**
-     * 集团id
+     * 权限id
      **/
-    private Integer groupId;
+    private Integer permissionId;
 
-    public Integer getUserPermissionId() {
-        return userPermissionId;
+    /**
+     * 目标集团id
+     **/
+    private Integer targetGroupId;
+
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setUserPermissionId(Integer userPermissionId) {
-        this.userPermissionId = userPermissionId;
+    public UserPermissionTargetGroupDetailsDto setUserId(Integer userId) {
+        this.userId = userId;
+        return this;
     }
 
-    public Integer getGroupId() {
-        return groupId;
+    public Integer getPermissionId() {
+        return permissionId;
     }
 
-    public void setGroupId(Integer groupId) {
-        this.groupId = groupId;
+    public UserPermissionTargetGroupDetailsDto setPermissionId(Integer permissionId) {
+        this.permissionId = permissionId;
+        return this;
+    }
+
+    public Integer getTargetGroupId() {
+        return targetGroupId;
+    }
+
+    public UserPermissionTargetGroupDetailsDto setTargetGroupId(Integer targetGroupId) {
+        this.targetGroupId = targetGroupId;
+        return this;
     }
 }

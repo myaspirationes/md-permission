@@ -91,11 +91,7 @@ public class UserGroupDetailsService {
         List<UserGroupDetails> userGroupDetails = userGroupDetailsMapper.selectByExample(getExample(userGroupId));
         Set<Integer> userIds = new HashSet<>();
         if (!CollectionUtils.isEmpty(userGroupDetails)){
-            userIds = userGroupDetails.stream()
-                    .filter(Objects::nonNull)
-                    .map(UserGroupDetails::getUserId)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
+            userIds = userGroupDetails.stream().filter(Objects::nonNull).map(UserGroupDetails::getUserId).filter(Objects::nonNull).collect(Collectors.toSet());
         }
         return userIds;
     }

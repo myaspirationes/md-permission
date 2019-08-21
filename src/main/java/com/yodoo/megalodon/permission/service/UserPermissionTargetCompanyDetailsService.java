@@ -2,7 +2,7 @@ package com.yodoo.megalodon.permission.service;
 
 import com.yodoo.feikongbao.provisioning.domain.system.dto.CompanyDto;
 import com.yodoo.feikongbao.provisioning.domain.system.entity.Company;
-import com.yodoo.feikongbao.provisioning.domain.system.mapper.CompanyMapper;
+import com.yodoo.feikongbao.provisioning.domain.system.service.CompanyService;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetCompanyDetailsDto;
 import com.yodoo.megalodon.permission.dto.UserPermissionTargetDto;
@@ -34,7 +34,7 @@ public class UserPermissionTargetCompanyDetailsService {
     private UserPermissionTargetCompanyDetailsMapper userPermissionTargetCompanyDetailsMapper;
 
     @Autowired
-    private CompanyMapper companyMapper;
+    private CompanyService companyService;
 
     @Autowired
     private UserPermissionDetailsService userPermissionDetailsService;
@@ -44,27 +44,21 @@ public class UserPermissionTargetCompanyDetailsService {
      * @param userPermissionTargetDto
      */
     public void updateUserPermissionTargetCompany(UserPermissionTargetDto userPermissionTargetDto) {
-        // 参数判断
-        if (userPermissionTargetDto.getUserId() == null) {
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        UserPermissionDetails userPermissionDetails = userPermissionDetailsService.selectByPrimaryKey(userPermissionTargetDto.getUserPermissionId());
-        if (userPermissionDetails == null){
-            throw new PermissionException(PermissionBundleKey.USER_PERMISSION_NOT_EXIST, PermissionBundleKey.USER_PERMISSION_NOT_EXIST_MSG);
-        }
-        // 通过用户权限 ids 删除 用户管理目标公司 数据
-        Example example = new Example(UserPermissionTargetCompanyDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId",userPermissionDetails.getId());
+        //  参数校验
+        updateUserPermissionTargetCompanyParameterCheck(userPermissionTargetDto);
+        // 先删除
+        Example example = getExampleByUserIdAndPermissionId(new UserPermissionDetails(userPermissionTargetDto.getUserId(), userPermissionTargetDto.getPermissionId()));
         userPermissionTargetCompanyDetailsMapper.deleteByExample(example);
         // 增加修改后的权限
-        if (!CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
-            userPermissionTargetDto.getTargetIds().stream()
-                    .filter(Objects::nonNull)
-                    .map(companyId ->{
-                        return userPermissionTargetCompanyDetailsMapper.insertSelective(new UserPermissionTargetCompanyDetails(userPermissionDetails.getId(), companyId));
-                    }).count();
-        }
+        userPermissionTargetDto.getTargetIds().stream()
+                .filter(Objects::nonNull)
+                .map(targetCompanyId ->{
+                    UserPermissionTargetCompanyDetails userPermissionTargetCompanyDetails = new UserPermissionTargetCompanyDetails();
+                    userPermissionTargetCompanyDetails.setUserId(userPermissionTargetDto.getUserId());
+                    userPermissionTargetCompanyDetails.setPermissionId(userPermissionTargetDto.getPermissionId());
+                    userPermissionTargetCompanyDetails.setTargetCompanyId(targetCompanyId);
+                    return userPermissionTargetCompanyDetailsMapper.insertSelective(userPermissionTargetCompanyDetails);
+                }).count();
     }
 
     /**
@@ -73,23 +67,19 @@ public class UserPermissionTargetCompanyDetailsService {
      * @return
      */
     public List<CompanyDto> selectCompanyNotInIds(Set<Integer> companyIdsListSet) {
-        List<CompanyDto> companyDtoList = new ArrayList<>();
-
         if (!CollectionUtils.isEmpty(companyIdsListSet)){
-            List<Company> companies = companyMapper.selectCompanyNotInIds(companyIdsListSet);
+            List<Company> companies = companyService.selectCompanyNotInIds(companyIdsListSet);
             if (!CollectionUtils.isEmpty(companies)){
-                companyDtoList = companies.stream()
+                return companies.stream()
                         .filter(Objects::nonNull)
                         .map(company -> {
-                            CompanyDto companyDto = new CompanyDto();
-                            BeanUtils.copyProperties(company, companyDto);
-                            return companyDto;
+                            return copyProperties(company);
                         })
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
         }
-        return companyDtoList;
+        return null;
     }
 
     /**
@@ -98,47 +88,44 @@ public class UserPermissionTargetCompanyDetailsService {
      * @return
      */
     public CompanyDto selectCompanyById(Integer companyId) {
-        Example example = new Example(Company.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("id", companyId);
-        Company company = companyMapper.selectOneByExample(example);
-        if (company != null){
-            CompanyDto companyDto = new CompanyDto();
-            BeanUtils.copyProperties(company, companyDto);
-            return companyDto;
-        }
-        return null;
+        return copyProperties(companyService.selectByPrimaryKey(companyId));
     }
 
     /**
-     * 通过用户权限id 查询用户管理目标公司
-     * @param userPermissionId
+     * 查询获取目标公司 ids
+     * @param userPermissionIdList
      * @return
      */
-    public List<Integer>  getCompanyIdsByUserPermissionId(Integer userPermissionId) {
-        Example example = getExample(userPermissionId);
-        List<UserPermissionTargetCompanyDetails> list = userPermissionTargetCompanyDetailsMapper.selectByExample(example);
-        List<Integer> companyIds = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(list)){
-            companyIds = list.stream()
+    public Set<Integer> getCompanyIdsByUserIdPermissionId(List<UserPermissionDetails> userPermissionIdList) {
+        Set<Integer> targetCompanyIds = new HashSet<>();
+        if (!CollectionUtils.isEmpty(userPermissionIdList)){
+            userPermissionIdList.stream()
                     .filter(Objects::nonNull)
-                    .map(UserPermissionTargetCompanyDetails::getCompanyId)
-                    .collect(Collectors.toList());
+                    .forEach(userPermissionDetails -> {
+                        Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
+                        List<UserPermissionTargetCompanyDetails> list = userPermissionTargetCompanyDetailsMapper.selectByExample(example);
+                        if (!CollectionUtils.isEmpty(list)){
+                            Set<Integer> collect = list.stream().filter(Objects::nonNull).map(UserPermissionTargetCompanyDetails::getTargetCompanyId).collect(Collectors.toSet());
+                            if (!CollectionUtils.isEmpty(collect)){
+                                targetCompanyIds.addAll(collect);
+                            }
+                        }
+                    });
         }
-        return companyIds;
+        return targetCompanyIds;
     }
 
     /**
-     * 通过用户权限ids 查询目标公司
-     * @param userPermissionIds
+     * 通过用户id 和 权限 id 查询目标公司
+     * @param userPermissionDetailsList
      */
-    public List<UserPermissionTargetCompanyDetailsDto> getTargetCompanyDetailsByUserPermissionIds(List<Integer> userPermissionIds) {
+    public List<UserPermissionTargetCompanyDetailsDto> getTargetCompanyDetailsByUserIdPermissionId(List<UserPermissionDetails> userPermissionDetailsList) {
         List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDtoList = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            userPermissionIds.stream()
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
+            userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        Example example = getExample(userPermissionId);
+                    .map(userPermissionDetails -> {
+                        Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
                         List<UserPermissionTargetCompanyDetails> list = userPermissionTargetCompanyDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(list)){
                             List<UserPermissionTargetCompanyDetailsDto> collect = list.stream()
@@ -159,10 +146,57 @@ public class UserPermissionTargetCompanyDetailsService {
 
     }
 
-    private Example getExample(Integer userPermissionId){
+    /**
+     * 复制公司数据
+     * @param company
+     * @return
+     */
+    private CompanyDto copyProperties(Company company){
+        if (company != null){
+            CompanyDto companyDto = new CompanyDto();
+            BeanUtils.copyProperties(company, companyDto);
+            return companyDto;
+        }
+        return null;
+    }
+
+    /**
+     * 更新目标公司参数校验
+     * @param userPermissionTargetDto
+     */
+    private void updateUserPermissionTargetCompanyParameterCheck(UserPermissionTargetDto userPermissionTargetDto) {
+        // 非空校验
+        if (userPermissionTargetDto == null || userPermissionTargetDto.getUserId() == null || userPermissionTargetDto.getUserId() < 0
+                || userPermissionTargetDto.getPermissionId() == null || userPermissionTargetDto.getPermissionId() < 0
+                || CollectionUtils.isEmpty(userPermissionTargetDto.getTargetIds())) {
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        // 查询用户权限是否存在
+        List<UserPermissionDetails> list = userPermissionDetailsService.selectUserPermissionDetailsByUserIdAndPermissionId(new UserPermissionDetails(userPermissionTargetDto.getUserId(), userPermissionTargetDto.getPermissionId()));
+        if (CollectionUtils.isEmpty(list)){
+            throw new PermissionException(PermissionBundleKey.USER_PERMISSION_NOT_EXIST, PermissionBundleKey.USER_PERMISSION_NOT_EXIST_MSG);
+        }
+        // 查询公司是否存在
+        Long companyNoExistCount = companyService.selectCompanyNoExistCountByIds(userPermissionTargetDto.getTargetIds());
+        if (companyNoExistCount != null && companyNoExistCount > 0){
+            throw new PermissionException(PermissionBundleKey.COMPANY_NOT_EXIST, PermissionBundleKey.COMPANY_NOT_EXIST_MSG);
+        }
+    }
+
+    /**
+     * 获取 example
+     * @param userPermissionDetails
+     * @return
+     */
+    private Example getExampleByUserIdAndPermissionId(UserPermissionDetails userPermissionDetails) {
         Example example = new Example(UserPermissionTargetCompanyDetails.class);
         Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userPermissionId", userPermissionId);
+        if (userPermissionDetails.getUserId() != null && userPermissionDetails.getUserId() > 0){
+            criteria.andEqualTo("userId", userPermissionDetails.getUserId());
+        }
+        if (userPermissionDetails.getPermissionId() != null && userPermissionDetails.getPermissionId() > 0){
+            criteria.andEqualTo("permissionId", userPermissionDetails.getPermissionId());
+        }
         return example;
     }
 }

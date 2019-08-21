@@ -26,9 +26,9 @@ import java.util.Map;
  * @Author houzhen
  * @Date 12:14 2019/5/15
  **/
-@Aspect
-@Component
-@Order(2)
+//@Aspect
+//@Component
+//@Order(2)
 public class PermissionMapperAspect {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -42,23 +42,23 @@ public class PermissionMapperAspect {
         {
             // 集团
             put("GroupsMapper",
-                    " id in (select target.group_id from user_permission_target_group_details target inner join " +
-                            "user_permission_details permission on target.user_permission_id = permission.id " +
+                    " id in (select target.target_group_id from user_permission_target_group_details target inner join " +
+                            "user_permission_details permission on target.user_id = permission.user_id and target.permission_id = permission.permission_id " +
                             "where permission.user_id=${userId})");
             // 公司
             put("CompanyMapper",
-                    " id in (select target.company_id from user_permission_target_company_details target inner join " +
-                            "user_permission_details permission on target.user_permission_id = permission.id " +
+                    " id in (select target.target_company_id from user_permission_target_company_details target inner join " +
+                            "user_permission_details permission on target.user_id = permission.user_id and target.permission_id = permission.permission_id " +
                             "where permission.user_id=${userId})");
             // 用户
             put("UserMapper",
-                    " id in (select target.user_id from user_permission_target_user_details target inner join " +
-                            "user_permission_details permission on target.user_permission_id = permission.id " +
+                    " id in (select target.target_user_id from user_permission_target_user_details target inner join " +
+                            "user_permission_details permission on target.user_id = permission.user_id and target.permission_id = permission.permission_id " +
                             "where permission.user_id=${userId})");
             // 用户组
             put("UserGroupMapper",
                     " id in (select target.user_group_id from user_permission_target_user_group_details target inner join " +
-                            "user_permission_details permission on target.user_permission_id = permission.id " +
+                            "user_permission_details permission on target.user_id = permission.user_id and target.permission_id = permission.permission_id " +
                             "where permission.user_id=${userId})");
         }
     };

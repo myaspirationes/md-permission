@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -49,6 +48,9 @@ public class PermissionGroupService {
     @Autowired
     private PermissionService permissionService;
 
+    @Autowired
+    private UserGroupService userGroupService;
+
     /**
      * 条件分页查询
      *
@@ -61,19 +63,7 @@ public class PermissionGroupService {
         BeanUtils.copyProperties(permissionGroupDto, permissionGroupReq);
         Page<?> pages = PageHelper.startPage(permissionGroupDto.getPageNum(), permissionGroupDto.getPageSize());
         List<PermissionGroup> select = permissionGroupMapper.select(permissionGroupReq);
-        List<PermissionGroupDto> collect = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(select)) {
-            collect = select.stream()
-                    .filter(Objects::nonNull)
-                    .map(permissionGroup -> {
-                        PermissionGroupDto dto = new PermissionGroupDto();
-                        BeanUtils.copyProperties(permissionGroup, dto);
-                        return dto;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        }
-        return new PageInfoDto<PermissionGroupDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), collect);
+        return new PageInfoDto<PermissionGroupDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), copyProperties(select));
     }
 
     /**
@@ -91,20 +81,6 @@ public class PermissionGroupService {
             updatePermissionGroupDetails(permissionGroup.getId(),permissionGroupDto.getPermissionIds());
         }
         return insertCount;
-    }
-
-    /**
-     * 更新权限与权限组关系表
-     * @param permissionGroupId
-     * @param permissionIds
-     */
-    private void updatePermissionGroupDetails(Integer permissionGroupId, Set<Integer> permissionIds) {
-        if (permissionGroupId != null && permissionGroupId > 0){
-            permissionGroupDetailsService.deleteByPermissionGroupId(permissionGroupId);
-        }
-        if (permissionGroupId != null && permissionGroupId > 0 && !CollectionUtils.isEmpty(permissionIds)){
-            permissionGroupDetailsService.insertPermissionGroupDetails(permissionGroupId, permissionIds);
-        }
     }
 
     /**
@@ -139,6 +115,8 @@ public class PermissionGroupService {
         if (deleteCount != null && deleteCount > 0){
             permissionGroupDetailsService.deleteByPermissionGroupId(id);
         }
+        // 更新批处理
+        userGroupService.userGroupBatchProcessing(null);
         return deleteCount;
     }
 
@@ -150,12 +128,66 @@ public class PermissionGroupService {
      */
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public PermissionGroupDto getPermissionGroupDetails(Integer id) {
-        PermissionGroup permissionGroup = selectByPrimaryKey(id);
-        PermissionGroupDto permissionGroupDto = new PermissionGroupDto();
-        if (permissionGroup != null) {
-            BeanUtils.copyProperties(permissionGroup, permissionGroupDto);
+        return copyProperties(selectByPrimaryKey(id));
+    }
+
+    /**
+     * 通过主键查询
+     *
+     * @param tid
+     * @return
+     */
+    public PermissionGroup selectByPrimaryKey(Integer tid) {
+        return permissionGroupMapper.selectByPrimaryKey(tid);
+    }
+
+    /**
+     * 通过id 查询，统计不存在的数量
+     * @param permissionGroupIds
+     * @return
+     */
+    public Long selectPermissionGroupNoExistCountByIds(Set<Integer> permissionGroupIds) {
+        Long count = null;
+        if (!CollectionUtils.isEmpty(permissionGroupIds)){
+            count = permissionGroupIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(id -> {
+                        return selectByPrimaryKey(id);
+                    })
+                    .filter(permissionGroup -> permissionGroup == null)
+                    .count();
         }
-        return permissionGroupDto;
+        return count;
+    }
+
+    /**
+     * 复制
+     * @param permissionGroupList
+     * @return
+     */
+    private List<PermissionGroupDto> copyProperties(List<PermissionGroup> permissionGroupList){
+        if (!CollectionUtils.isEmpty(permissionGroupList)){
+            return permissionGroupList.stream()
+                    .filter(Objects::nonNull)
+                    .map(permissionGroup -> {
+                        return copyProperties(permissionGroup);
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    /**
+     * 复制
+     * @param permissionGroup
+     * @return
+     */
+    private PermissionGroupDto copyProperties(PermissionGroup permissionGroup){
+        if (permissionGroup != null){
+            PermissionGroupDto permissionGroupDto = new PermissionGroupDto();
+            BeanUtils.copyProperties(permissionGroup, permissionGroupDto);
+            return permissionGroupDto;
+        }
+        return null;
     }
 
     /**
@@ -198,13 +230,17 @@ public class PermissionGroupService {
     }
 
     /**
-     * 通过主键查询
-     *
-     * @param tid
-     * @return
+     * 更新权限与权限组关系表
+     * @param permissionGroupId
+     * @param permissionIds
      */
-    public PermissionGroup selectByPrimaryKey(Integer tid) {
-        return permissionGroupMapper.selectByPrimaryKey(tid);
+    private void updatePermissionGroupDetails(Integer permissionGroupId, Set<Integer> permissionIds) {
+        if (permissionGroupId != null && permissionGroupId > 0){
+            permissionGroupDetailsService.deleteByPermissionGroupId(permissionGroupId);
+        }
+        if (permissionGroupId != null && permissionGroupId > 0 && !CollectionUtils.isEmpty(permissionIds)){
+            permissionGroupDetailsService.insertPermissionGroupDetails(permissionGroupId, permissionIds);
+        }
     }
 
     /**
@@ -256,24 +292,5 @@ public class PermissionGroupService {
         if (userGroupPermissionDetailsCount != null && userGroupPermissionDetailsCount > 0) {
             throw new PermissionException(PermissionBundleKey.THE_DATA_IS_STILL_IN_USE, PermissionBundleKey.THE_DATA_IS_STILL_IN_USE_MEG);
         }
-    }
-
-    /**
-     * 通过id 查询，统计不存在的数量
-     * @param permissionGroupIds
-     * @return
-     */
-    public Long selectPermissionGroupNoExistCountByIds(Set<Integer> permissionGroupIds) {
-        Long count = null;
-        if (!CollectionUtils.isEmpty(permissionGroupIds)){
-            count = permissionGroupIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(id -> {
-                        return selectByPrimaryKey(id);
-                    })
-                    .filter(permissionGroup -> permissionGroup == null)
-                    .count();
-        }
-        return count;
     }
 }

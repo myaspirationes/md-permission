@@ -19,10 +19,10 @@ public class UserPermissionTargetDto extends BaseDto {
     /**
      * 用户权限id
      */
-    private Integer userPermissionId;
+    private Integer permissionId;
 
     /**
-     * 目标集团
+     * 目标集团、目标公司或目标用户
      */
     private Set<Integer> targetIds;
 
@@ -35,12 +35,12 @@ public class UserPermissionTargetDto extends BaseDto {
         return this;
     }
 
-    public Integer getUserPermissionId() {
-        return userPermissionId;
+    public Integer getPermissionId() {
+        return permissionId;
     }
 
-    public UserPermissionTargetDto setUserPermissionId(Integer userPermissionId) {
-        this.userPermissionId = userPermissionId;
+    public UserPermissionTargetDto setPermissionId(Integer permissionId) {
+        this.permissionId = permissionId;
         return this;
     }
 

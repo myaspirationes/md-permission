@@ -110,8 +110,7 @@ public class UserGroupPermissionDetailsService {
      * @return
      */
     public Integer deleteUserGroupPermissionDetailsByUserGroupId(Integer userGroupId) {
-        Example example = getExample(userGroupId);
-        return userGroupPermissionDetailsMapper.deleteByExample(example);
+        return userGroupPermissionDetailsMapper.deleteByExample(getExample(userGroupId));
     }
 
     /**

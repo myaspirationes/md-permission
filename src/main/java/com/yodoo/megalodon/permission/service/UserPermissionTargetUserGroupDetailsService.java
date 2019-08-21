@@ -41,7 +41,7 @@ public class UserPermissionTargetUserGroupDetailsService {
             userPermissionIds.stream()
                     .filter(Objects::nonNull)
                     .forEach(userPermissionId -> {
-                        userPermissionTargetUserGroupDetailsMapper.insertSelective(new UserPermissionTargetUserGroupDetails(userGroupId, userPermissionId));
+                        insertUserPermissionDetails(userGroupId, userPermissionId);
                     });
         }
     }
@@ -85,7 +85,9 @@ public class UserPermissionTargetUserGroupDetailsService {
     private Example getExample(Integer userGroupId){
         Example example = new Example(UserPermissionTargetUserGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userGroupId", userGroupId);
+        if (userGroupId != null && userGroupId > 0){
+            criteria.andEqualTo("userGroupId", userGroupId);
+        }
         return example;
     }
 }

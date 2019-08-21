@@ -31,8 +31,7 @@ public class PermissionGroupDetailsService {
      * @return
      */
     public Integer selectPermissionGroupDetailsCountByPermissionGroupId(Integer permissionGroupId) {
-        Example example = getPermissionGroupDetailsExampleByPermissionGroupId(permissionGroupId);
-        return permissionGroupDetailsMapper.selectCountByExample(example);
+        return permissionGroupDetailsMapper.selectCountByExample(getExample(permissionGroupId));
     }
 
     /**
@@ -46,7 +45,7 @@ public class PermissionGroupDetailsService {
             permissionGroupIdList.stream()
                     .filter(Objects::nonNull)
                     .forEach(permissionGroupId -> {
-                        Example example = getPermissionGroupDetailsExampleByPermissionGroupId(permissionGroupId);
+                        Example example = getExample(permissionGroupId);
                         List<PermissionGroupDetails> permissionGroupDetails = permissionGroupDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(permissionGroupDetails)){
                             Set<Integer> collect = permissionGroupDetails.stream()
@@ -89,11 +88,7 @@ public class PermissionGroupDetailsService {
      * @param permissionGroupId
      */
     public void deleteByPermissionGroupId(Integer permissionGroupId) {
-        Example example = new Example(PermissionGroupDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("permissionGroupId", permissionGroupId);
-        permissionGroupDetailsMapper.deleteByExample(example);
-
+        permissionGroupDetailsMapper.deleteByExample(getExample(permissionGroupId));
     }
 
     public void insertPermissionGroupDetails(Integer permissionGroupId, Set<Integer> permissionIds){
@@ -106,7 +101,12 @@ public class PermissionGroupDetailsService {
         }
     }
 
-    private Example getPermissionGroupDetailsExampleByPermissionGroupId(Integer permissionGroupId){
+    /**
+     * 获取 example
+     * @param permissionGroupId
+     * @return
+     */
+    private Example getExample(Integer permissionGroupId){
         Example example = new Example(PermissionGroupDetails.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("permissionGroupId", permissionGroupId);

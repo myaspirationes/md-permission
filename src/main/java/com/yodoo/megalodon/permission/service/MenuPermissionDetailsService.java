@@ -48,10 +48,7 @@ public class MenuPermissionDetailsService {
             permissionIdList.stream()
                     .filter(Objects::nonNull)
                     .map(permissionId -> {
-                        MenuPermissionDetails menuPermissionDetails = new MenuPermissionDetails();
-                        menuPermissionDetails.setMenuId(menuId);
-                        menuPermissionDetails.setPermissionId(permissionId);
-                        return menuPermissionDetailsMapper.insertSelective(menuPermissionDetails);
+                        return menuPermissionDetailsMapper.insertSelective(new MenuPermissionDetails(menuId, permissionId));
                     }).collect(Collectors.toList());
         }
     }
@@ -69,7 +66,6 @@ public class MenuPermissionDetailsService {
         Example example = new Example(MenuPermissionDetails.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("menuId", menuId);
-        example.and(criteria);
         menuPermissionDetailsMapper.deleteByExample(example);
     }
 }

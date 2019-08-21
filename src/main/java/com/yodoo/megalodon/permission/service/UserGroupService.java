@@ -9,7 +9,6 @@ import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.dto.UserGroupDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.UserGroup;
-import com.yodoo.megalodon.permission.entity.UserGroupCondition;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.UserGroupMapper;
@@ -86,8 +85,7 @@ public class UserGroupService {
             collect = userGroupList.stream()
                     .filter(Objects::nonNull)
                     .map(userGroup -> {
-                        UserGroupDto userGroupDtoResponse = new UserGroupDto();
-                        BeanUtils.copyProperties(userGroup, userGroupDtoResponse);
+                        UserGroupDto userGroupDtoResponse = copyProperties(userGroup);
                         // 查询当前用户组下有多少个用户
                         Integer userCount = userGroupDetailsService.selectCountByUserGroupId(userGroup.getId());
                         if (userCount != null && userCount > 0){
@@ -169,25 +167,6 @@ public class UserGroupService {
     }
 
     /**
-     * 更新
-     * @param userGroupId
-     * @param permissionGroupIds
-     * @param searchConditionIds
-     */
-    private void updateUserGroupPermissionDetailsAndUserGroupConditionAndUserPermission(Integer userGroupId, Set<Integer> permissionGroupIds, List<Integer> searchConditionIds) {
-        // 如果权限组id 不为空， 更新 更新用户组权限组关系数据
-        userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroupId,permissionGroupIds);
-        // 用户组条件不为空
-        List<SearchCondition>  searchConditionList = searchConditionIds.stream()
-                .filter(Objects::nonNull)
-                .map(searchConditionId -> {
-                    return searchConditionService.selectByPrimaryKey(searchConditionId);
-                }).filter(Objects::nonNull).collect(Collectors.toList());
-
-        userGroupConditionService.updateUserGroupCondition(userGroupId,searchConditionList);
-    }
-
-    /**
      * 删除用户组
      * @param userGroupId
      * @return
@@ -222,9 +201,7 @@ public class UserGroupService {
             return userGroups.stream()
                     .filter(Objects::nonNull)
                     .map(userGroup -> {
-                        UserGroupDto userGroupDto = new UserGroupDto();
-                        BeanUtils.copyProperties(userGroup, userGroupDto);
-                        return userGroupDto;
+                        return copyProperties(userGroup);
                     }).filter(Objects::nonNull).collect(Collectors.toList());
         }
         return null;
@@ -235,11 +212,11 @@ public class UserGroupService {
      * @return
      */
     public UserGroupDto getUserGroupDetailsById(Integer id) {
-        UserGroupDto userGroupDto = new UserGroupDto();
+        UserGroupDto userGroupDto = null;
         // 查询用户组
         UserGroup userGroup = selectByPrimaryKey(id);
         if (null != userGroup){
-            BeanUtils.copyProperties(userGroup, userGroupDto);
+            userGroupDto = copyProperties(userGroup);
             // 查询用户与用户组关系表 获取用户 ids
             Set<Integer> userIds = userGroupDetailsService.selectUserIdsByUserGroupId(id);
             if (!CollectionUtils.isEmpty(userIds)){
@@ -284,9 +261,42 @@ public class UserGroupService {
             userGroupList.stream()
                     .filter(Objects::nonNull)
                     .forEach(userGroupIdSet -> {
-                        executeGroupBatch(userGroupIdSet);
+                        this.executeGroupBatch(userGroupIdSet);
                     });
         }
+    }
+
+    /**
+     * 复制用户组
+     * @param userGroup
+     * @return
+     */
+    private UserGroupDto copyProperties(UserGroup userGroup){
+        if (userGroup != null){
+            UserGroupDto userGroupDto = new UserGroupDto();
+            BeanUtils.copyProperties(userGroup, userGroupDto);
+            return userGroupDto;
+        }
+        return null;
+    }
+
+    /**
+     * 更新
+     * @param userGroupId
+     * @param permissionGroupIds
+     * @param searchConditionIds
+     */
+    private void updateUserGroupPermissionDetailsAndUserGroupConditionAndUserPermission(Integer userGroupId, Set<Integer> permissionGroupIds, List<Integer> searchConditionIds) {
+        // 如果权限组id 不为空， 更新 更新用户组权限组关系数据
+        userGroupPermissionDetailsService.updateUserGroupPermissionDetails(userGroupId,permissionGroupIds);
+        // 用户组条件不为空
+        List<SearchCondition>  searchConditionList = searchConditionIds.stream()
+                .filter(Objects::nonNull)
+                .map(searchConditionId -> {
+                    return searchConditionService.selectByPrimaryKey(searchConditionId);
+                }).filter(Objects::nonNull).collect(Collectors.toList());
+
+        userGroupConditionService.updateUserGroupCondition(userGroupId,searchConditionList);
     }
 
     /**
@@ -305,7 +315,7 @@ public class UserGroupService {
         userGroupDetailsService.updateUserGroupDetailsBatch(userGroupId, userIdList);
 
         // 维护用户权限详情和用户组与用户权限关系表
-        userPermissionDetailsService.updateUserPermission(userGroupId,userIdList,permissionIds);
+        userPermissionDetailsService.updateUserPermission(userGroupId, userIdList, permissionIds);
     }
 
     /**

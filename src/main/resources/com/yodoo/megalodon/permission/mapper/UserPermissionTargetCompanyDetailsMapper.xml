@@ -5,11 +5,12 @@
                extends="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonResultMap"
                type="com.yodoo.megalodon.permission.entity.UserPermissionTargetCompanyDetails">
         <id column="id" jdbcType="INTEGER" property="id"/>
-        <result column="user_permission_id" jdbcType="INTEGER" property="userPermissionId"/>
-        <result column="company_id" jdbcType="INTEGER" property="companyId"/>
+        <result column="user_id" jdbcType="INTEGER" property="userId" />
+        <result column="permission_id" jdbcType="INTEGER" property="permissionId" />
+        <result column="target_company_id" jdbcType="INTEGER" property="targetCompanyId" />
     </resultMap>
     <sql id="Base_Column_List">
-    id, user_permission_id, company_id,
+        id, user_id, permission_id, target_company_id,
         <include refid="com.yodoo.megalodon.permission.common.BaseMapper.baseCommonColumn"/>
   </sql>
 

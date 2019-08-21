@@ -11,7 +11,7 @@ import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.UserDto;
 import com.yodoo.megalodon.permission.entity.SearchCondition;
 import com.yodoo.megalodon.permission.entity.User;
-import com.yodoo.megalodon.permission.entity.UserGroupCondition;
+import com.yodoo.megalodon.permission.entity.UserPermissionDetails;
 import com.yodoo.megalodon.permission.enums.UserSexEnum;
 import com.yodoo.megalodon.permission.enums.UserStatusEnum;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
@@ -122,8 +122,7 @@ public class UserService {
             criteria.andEqualTo("phone",userDto.getPhone());
         }
         Page<?> pages = PageHelper.startPage(userDto.getPageNum(), userDto.getPageSize());
-        List<UserDto> collect = getUserDtoByExample(example);
-        return new PageInfoDto<UserDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), collect);
+        return new PageInfoDto<UserDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), getUserDtoByExample(example));
     }
 
     /**
@@ -216,34 +215,25 @@ public class UserService {
      **/
     @PreAuthorize("hasAnyAuthority('permission_manage')")
     public List<GroupsDto> getTargetGroupsByUserId(Integer userId) {
-        logger.info("UserPermissionTargetGroupDetailsService.getTargetGroupsByUserId userId:{}", userId);
         if (userId == null) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        List<GroupsDto> groupsDtoList = new ArrayList<>();
-        // 通过用户id 查询用户权限表，获取用户权限表id
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限id 查询用户管理目标集团，获取集团 ids
-                        List<Integer> groupIds = userPermissionTargetGroupDetailsService.getGroupIdsByUserPermissionId(userPermissionId);
-                        if (!CollectionUtils.isEmpty(groupIds)) {
-                            // 通过集团id 查询集团表信息
-                            List<GroupsDto> collect= groupIds.stream()
-                                    .filter(Objects::nonNull)
-                                    .map(groupId -> {
-                                        return groupsService.selectGroupById(groupId);
-                                    }).filter(Objects::nonNull).collect(Collectors.toList());
-                            if (!CollectionUtils.isEmpty(collect)){
-                                groupsDtoList.addAll(collect);
-                            }
-                        }
-                        return null;
-                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        // 通过用户id 查询用户权限表
+        List<UserPermissionDetails> userPermissionIdList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIdList)){
+            // 通过用户id和权限id 查询用户管理目标集团，获取集团 ids
+            Set<Integer> groupIds = userPermissionTargetGroupDetailsService.getGroupIdsByUserIdPermissionId(userPermissionIdList);
+            if (!CollectionUtils.isEmpty(groupIds)){
+                return groupIds.stream()
+                        .filter(Objects::nonNull)
+                        .map(groupId -> {
+                            return groupsService.selectGroupById(groupId);
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
         }
-        return groupsDtoList;
+        return null;
     }
 
     /**
@@ -252,35 +242,16 @@ public class UserService {
      * @Date 9:43 2019/8/6
      **/
     public List<GroupsDto> getAvailableGroupsByUserId(Integer userId) {
-        logger.info("UserPermissionTargetGroupDetailsService.getAvailableGroupsByUserId userId:{}", userId);
-        List<GroupsDto> responseList = new ArrayList<>();
         if (userId == null) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
         // 公司 ids
         Set<Integer> groupsIdsListSet = new HashSet<>();
-
-        // 通过用户id查询用户权限表，获取用户权限表ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            List<List<Integer>> groupsIdsList = userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限表id 查询用户管理目标集团表，获取集团ids
-                        return userPermissionTargetGroupDetailsService.getGroupIdsByUserPermissionId(userPermissionId);
-                    })
-                    .filter(Objects::nonNull)
-                    .filter(list -> list != null && list.size() > 0)
-                    .collect(Collectors.toList());
-            // 整合公司ids
-            if (!CollectionUtils.isEmpty(groupsIdsList)){
-                groupsIdsList.stream()
-                        .filter(Objects::nonNull)
-                        .filter(list -> list != null && list.size() > 0)
-                        .forEach(groupsIds -> {
-                            groupsIdsListSet.addAll(groupsIds);
-                        });
-            }
+        // 通过用户id查询用户权限表
+        List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
+            // 通过用户id和权限id 查询用户管理目标集团，获取集团 ids
+            groupsIdsListSet = userPermissionTargetGroupDetailsService.getGroupIdsByUserIdPermissionId(userPermissionDetailsList);
         }
         return groupsService.selectGroupsNotInIds(groupsIdsListSet);
     }
@@ -291,33 +262,24 @@ public class UserService {
      * @return
      */
     public List<CompanyDto> getUserManageTargetCompanyListByUserId(Integer userId){
-        if (userId == null) {
+        if (userId == null || userId < 0) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        List<CompanyDto> companyDtoList = new ArrayList<>();
-        // 通过用户id 查询用户权限表，获取用户权限表id
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限id 查询用户管理目标公司,获取公司 ids
-                        List<Integer> companyIds = userPermissionTargetCompanyDetailsService.getCompanyIdsByUserPermissionId(userPermissionId);
-                        if (!CollectionUtils.isEmpty(companyIds)) {
-                            // 通过公司id 查询公司表信息
-                            List<CompanyDto> collect= companyIds.stream()
-                                    .filter(Objects::nonNull)
-                                    .map(companyId -> {
-                                        return userPermissionTargetCompanyDetailsService.selectCompanyById(companyId);
-                                    }).filter(Objects::nonNull).collect(Collectors.toList());
-                            if (!CollectionUtils.isEmpty(collect)){
-                                companyDtoList.addAll(collect);
-                            }
-                        }
-                        return null;
-                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        // 通过用户id 查询用户权限表
+        List<UserPermissionDetails> userPermissionIdList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIdList)){
+            // 获取管理的公司ids
+            Set<Integer> companyIds = userPermissionTargetCompanyDetailsService.getCompanyIdsByUserIdPermissionId(userPermissionIdList);
+            if (!CollectionUtils.isEmpty(companyIds)){
+                return companyIds.stream()
+                        .filter(Objects::nonNull)
+                        .map(companyId -> {
+                            // 查询公司信息
+                            return userPermissionTargetCompanyDetailsService.selectCompanyById(companyId);
+                        }).filter(Objects::nonNull).collect(Collectors.toList());
+            }
         }
-        return companyDtoList;
+        return null;
     }
 
     /**
@@ -326,32 +288,15 @@ public class UserService {
      * @return
      */
     public List<CompanyDto> getAvailableUserManageTargetCompanyListByUserId(Integer userId){
-        if (userId == null) {
+        if (userId == null || userId < 0) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        // 公司 ids
         Set<Integer> companyIdsListSet = new HashSet<>();
-
-        // 通过用户id查询用户权限表，获取用户权限表ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            List<List<Integer>> companyIdsList = userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限表id 查询用户管理目标公司表，获取公司ids
-                        return userPermissionTargetCompanyDetailsService.getCompanyIdsByUserPermissionId(userPermissionId);
-                    })
-                    .filter(Objects::nonNull)
-                    .filter(list -> list != null && list.size() > 0)
-                    .collect(Collectors.toList());
-            // 整合公司ids
-            if (!CollectionUtils.isEmpty(companyIdsList)){
-                companyIdsList.stream()
-                        .filter(Objects::nonNull)
-                        .forEach(companyIds -> {
-                            companyIdsListSet.addAll(companyIds);
-                        });
-            }
+        // 通过用户id 查询用户权限表
+        List<UserPermissionDetails> userPermissionIdList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIdList)){
+            // 获取管理的公司ids
+            companyIdsListSet = userPermissionTargetCompanyDetailsService.getCompanyIdsByUserIdPermissionId(userPermissionIdList);
         }
         return userPermissionTargetCompanyDetailsService.selectCompanyNotInIds(companyIdsListSet);
     }
@@ -362,33 +307,23 @@ public class UserService {
      * @return
      */
     public List<UserDto> selectUserManageTargetUserListByUserId(Integer userId){
-        if (userId == null) {
+        if (userId == null || userId < 0) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        List<UserDto> userDtoList = new ArrayList<>();
-        // 通过用户id 查询用户权限表，获取用户权限表id
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限id 查询用户管理目标公司,获取公司 ids
-                        List<Integer> userIds = userPermissionTargetUserDetailsService.getUserIdsByUserPermissionId(userPermissionId);
-                        if (!CollectionUtils.isEmpty(userIds)) {
-                            // 通过公司id 查询公司表信息
-                            List<UserDto> collect= userIds.stream()
-                                    .filter(Objects::nonNull)
-                                    .map(id -> {
-                                        return this.getUserDtoByUserId(id);
-                                    }).filter(Objects::nonNull).collect(Collectors.toList());
-                            if (!CollectionUtils.isEmpty(collect)){
-                                userDtoList.addAll(collect);
-                            }
-                        }
-                        return null;
-                    }).filter(Objects::nonNull).collect(Collectors.toList());
+        // 通过用户id 查询用户权限表
+        List<UserPermissionDetails> userPermissionIdList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIdList)) {
+            // 获取管理的公司ids
+            Set<Integer> targetUserIdList = userPermissionTargetUserDetailsService.getUserIdsByUserIdAndPermissionId(userPermissionIdList);
+            if (!CollectionUtils.isEmpty(targetUserIdList)){
+                return targetUserIdList.stream()
+                        .filter(Objects::nonNull)
+                        .map(targetUserId -> {
+                            return this.getUserDtoByUserId(targetUserId);
+                        }).filter(Objects::nonNull).collect(Collectors.toList());
+            }
         }
-        return userDtoList;
+        return null;
     }
 
     /**
@@ -397,34 +332,18 @@ public class UserService {
      * @return
      */
     public List<UserDto> getAvailableUserManageTargetUserListByUserId(Integer userId){
-        if (userId == null) {
+        if (userId == null || userId < 0) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        // 用户 ids
-        Set<Integer> userIdsListSet = new HashSet<>();
+        Set<Integer> targetUserIdList = new HashSet<>();
+        // 通过用户id 查询用户权限表
+        List<UserPermissionDetails> userPermissionIdList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionIdList)) {
+            // 获取管理的公司ids
+            targetUserIdList = userPermissionTargetUserDetailsService.getUserIdsByUserIdAndPermissionId(userPermissionIdList);
 
-        // 通过用户id查询用户权限表，获取用户权限表ids
-        List<Integer> userPermissionIds = userPermissionDetailsService.getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
-            List<List<Integer>> userIdsList = userPermissionIds.stream()
-                    .filter(Objects::nonNull)
-                    .map(userPermissionId -> {
-                        // 通过用户权限表id 查询用户管理目标公司表，获取公司ids
-                        return userPermissionTargetUserDetailsService.getUserIdsByUserPermissionId(userPermissionId);
-                    })
-                    .filter(Objects::nonNull)
-                    .filter(list -> list != null && list.size() > 0)
-                    .collect(Collectors.toList());
-            // 整合用户 ids
-            if (!CollectionUtils.isEmpty(userIdsList)){
-                userIdsList.stream()
-                        .filter(Objects::nonNull)
-                        .forEach(userIds -> {
-                            userIdsListSet.addAll(userIds);
-                        });
-            }
         }
-        return selectUserNotInIds(userIdsListSet);
+        return selectUserNotInIds(targetUserIdList);
     }
 
     /**
@@ -495,12 +414,26 @@ public class UserService {
      */
     public UserDto getUserDtoByUserId(Integer requestUserId) {
         User user = selectByPrimaryKey(requestUserId);
-        if (user != null){
-            UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(user, userDto);
-            return userDto;
+        return user != null ? copyProperties(user) : null;
+    }
+
+    /**
+     * 查询不存在的数据量
+     * @param userIds
+     * @return
+     */
+    public Long selectUserNoExistCountByIds(Set<Integer> userIds) {
+        Long count = null;
+        if (!CollectionUtils.isEmpty(userIds)){
+            count = userIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(id -> {
+                        return selectByPrimaryKey(id);
+                    })
+                    .filter(groups -> groups == null)
+                    .count();
         }
-        return null;
+        return count;
     }
 
     /**
@@ -509,19 +442,9 @@ public class UserService {
      * @return
      */
     private List<UserDto> selectUserNotInIds(Set<Integer> userIdsListSet) {
-
         if (!CollectionUtils.isEmpty(userIdsListSet)){
            List<User> userList = userMapper.selectUserNotInIds(userIdsListSet);
-           if (!CollectionUtils.isEmpty(userList)){
-               return userList.stream()
-                       .filter(Objects::nonNull)
-                       .map(user -> {
-                           UserDto userDto = new UserDto();
-                           BeanUtils.copyProperties(user,userDto);
-                           return userDto;
-                       }).filter(Objects::nonNull)
-                       .collect(Collectors.toList());
-           }
+            return copyProperties(userList);
         }
         return null;
     }
@@ -532,20 +455,38 @@ public class UserService {
      * @return
      */
     private List<UserDto> getUserDtoByExample(Example example) {
-        List<UserDto> userDtoList = new ArrayList<>();
         List<User> users = userMapper.selectByExample(example);
+        return copyProperties(users);
+    }
+
+    /**
+     * 复制user
+     * @param users
+     * @return
+     */
+    private List<UserDto> copyProperties(List<User> users){
         if (!CollectionUtils.isEmpty(users)){
-            userDtoList = users.stream()
+            return users.stream()
                     .filter(Objects::nonNull)
                     .map(user -> {
-                        UserDto userDto = new UserDto();
-                        BeanUtils.copyProperties(user, userDto);
-                        return userDto;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                        return copyProperties(user);
+                    }).filter(Objects::nonNull).collect(Collectors.toList());
         }
-        return userDtoList;
+        return null;
+    }
+
+    /**
+     * 复制user
+     * @param user
+     * @return
+     */
+    private UserDto copyProperties(User user){
+        if (user != null){
+            UserDto userDto = new UserDto();
+            BeanUtils.copyProperties(user,userDto);
+            return userDto;
+        }
+        return null;
     }
 
     /**

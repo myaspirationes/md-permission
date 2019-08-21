@@ -63,10 +63,7 @@ public class UserPermissionDetailsService {
      * @return
      */
     public List<UserPermissionDetails> selectUserPermissionDetailsByPermissionId(Integer permissionId) {
-        Example example = new Example(UserPermissionDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("permissionId",permissionId);
-        return userPermissionDetailsMapper.selectByExample(example);
+        return userPermissionDetailsMapper.selectByExample(getExample(new UserPermissionDetails(null, permissionId)));
     }
 
 
@@ -76,16 +73,14 @@ public class UserPermissionDetailsService {
      * @return
      */
     public List<Integer> getUserPermissionIdsByUserId(Integer userId){
-        List<Integer> userPermissionIds = new ArrayList<>();
-
         List<UserPermissionDetails> userPermissionDetailsList = this.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
-            userPermissionIds = userPermissionDetailsList.stream()
+            return userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
                     .map(UserPermissionDetails::getId)
                     .collect(Collectors.toList());
         }
-        return userPermissionIds;
+        return null;
     }
 
     /**
@@ -94,10 +89,7 @@ public class UserPermissionDetailsService {
      * @return
      */
     public Integer deleteUserPermissionDetailsByUserId(Integer userId) {
-        Example example = new Example(UserPermissionDetails.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("userId", userId);
-        return userPermissionDetailsMapper.deleteByExample(example);
+        return userPermissionDetailsMapper.deleteByExample(getExample(new UserPermissionDetails(userId, null)));
     }
 
     /**
@@ -190,20 +182,20 @@ public class UserPermissionDetailsService {
     public ActionPermissionInUserListDto actionPermissionInUserList(Integer userId) {
         ActionPermissionInUserListDto actionPermissionInUserListDto = new ActionPermissionInUserListDto();
         // 获取用户权限 ids
-        List<Integer> userPermissionIds = getUserPermissionIdsByUserId(userId);
-        if (!CollectionUtils.isEmpty(userPermissionIds)){
+        List<UserPermissionDetails> userPermissionDetailsList = selectUserPermissionDetailsByUserId(userId);
+        if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
             // 目标集团
-            List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDto = userPermissionTargetGroupDetailsService.getTargetGroupDetailsByUserPermissionIds(userPermissionIds);
+            List<UserPermissionTargetGroupDetailsDto> userPermissionTargetGroupDetailsDto = userPermissionTargetGroupDetailsService.getTargetGroupDetailsByUserIdAndPermissionId(userPermissionDetailsList);
             if (!CollectionUtils.isEmpty(userPermissionTargetGroupDetailsDto)){
                 actionPermissionInUserListDto.setUserPermissionTargetGroupDetailsDtoList(userPermissionTargetGroupDetailsDto);
             }
             // 目标公司
-            List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDto = userPermissionTargetCompanyDetailsService.getTargetCompanyDetailsByUserPermissionIds(userPermissionIds);
+            List<UserPermissionTargetCompanyDetailsDto> userPermissionTargetCompanyDetailsDto = userPermissionTargetCompanyDetailsService.getTargetCompanyDetailsByUserIdPermissionId(userPermissionDetailsList);
             if (!CollectionUtils.isEmpty(userPermissionTargetCompanyDetailsDto)){
                 actionPermissionInUserListDto.setUserPermissionTargetCompanyDetailsDtoList(userPermissionTargetCompanyDetailsDto);
             }
             // 目标用户
-            List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDto = userPermissionTargetUserDetailsService.getTargetUserDetailsByUserPermissionIds(userPermissionIds);
+            List<UserPermissionTargetUserDetailsDto> userPermissionTargetUserDetailsDto = userPermissionTargetUserDetailsService.getTargetUserDetailsByUserIdPermissionId(userPermissionDetailsList);
             if (!CollectionUtils.isEmpty(userPermissionTargetUserDetailsDto)){
                 actionPermissionInUserListDto.setUserPermissionTargetUserDetailsDtoList(userPermissionTargetUserDetailsDto);
             }
@@ -218,5 +210,31 @@ public class UserPermissionDetailsService {
      */
     public UserPermissionDetails selectByPrimaryKey(Integer id){
         return userPermissionDetailsMapper.selectByPrimaryKey(id);
+    }
+
+    /**
+     * 通过用户 id 和权限 id 查询
+     * @param userPermissionDetails
+     * @return
+     */
+    public List<UserPermissionDetails> selectUserPermissionDetailsByUserIdAndPermissionId(UserPermissionDetails userPermissionDetails) {
+        return userPermissionDetailsMapper.selectByExample(getExample(userPermissionDetails));
+    }
+
+    /**
+     * 获取 example
+     * @param userPermissionDetails
+     * @return
+     */
+    private Example getExample(UserPermissionDetails userPermissionDetails){
+        Example example = new Example(UserPermissionDetails.class);
+        Example.Criteria criteria = example.createCriteria();
+        if (userPermissionDetails.getUserId() != null && userPermissionDetails.getUserId() > 0){
+            criteria.andEqualTo("userId", userPermissionDetails.getUserId());
+        }
+        if (userPermissionDetails.getPermissionId() != null && userPermissionDetails.getPermissionId() > 0){
+            criteria.andEqualTo("permissionId", userPermissionDetails.getPermissionId());
+        }
+        return example;
     }
 }
