@@ -153,9 +153,7 @@ public class PermissionGroupService {
                     .filter(Objects::nonNull)
                     .map(id -> {
                         return selectByPrimaryKey(id);
-                    })
-                    .filter(permissionGroup -> permissionGroup == null)
-                    .count();
+                    }).filter(permissionGroup -> permissionGroup == null).count();
         }
         return count;
     }

@@ -98,9 +98,9 @@ public class UserGroupPermissionDetailsService {
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(permissionGroupIds)){
             permissionGroupIds.stream()
                     .filter(Objects::nonNull)
-                    .map(permissionGroupId -> {
-                        return userGroupPermissionDetailsMapper.insertSelective(new UserGroupPermissionDetails(userGroupId, permissionGroupId));
-                    }).filter(Objects::nonNull).count();
+                    .forEach(permissionGroupId -> {
+                        userGroupPermissionDetailsMapper.insertSelective(new UserGroupPermissionDetails(userGroupId, permissionGroupId));
+                    });
         }
     }
 
