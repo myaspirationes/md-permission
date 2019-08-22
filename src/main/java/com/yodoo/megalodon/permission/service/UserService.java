@@ -222,7 +222,7 @@ public class UserService {
         List<UserPermissionDetails> userPermissionIdList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionIdList)){
             // 通过用户id和权限id 查询用户管理目标集团，获取集团 ids
-            Set<Integer> groupIds = userPermissionTargetGroupDetailsService.getGroupIdsByUserIdPermissionId(userPermissionIdList);
+            Set<Integer> groupIds = userPermissionTargetGroupDetailsService.getGroupIdsByUserIdAndPermissionId(userPermissionIdList);
             if (!CollectionUtils.isEmpty(groupIds)){
                 return groupIds.stream()
                         .filter(Objects::nonNull)
@@ -249,7 +249,7 @@ public class UserService {
         List<UserPermissionDetails> userPermissionDetailsList = userPermissionDetailsService.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
             // 通过用户id和权限id 查询用户管理目标集团，获取集团 ids
-            groupsIdsListSet = userPermissionTargetGroupDetailsService.getGroupIdsByUserIdPermissionId(userPermissionDetailsList);
+            groupsIdsListSet = userPermissionTargetGroupDetailsService.getGroupIdsByUserIdAndPermissionId(userPermissionDetailsList);
         }
         return groupsService.selectGroupsNotInIds(groupsIdsListSet);
     }
