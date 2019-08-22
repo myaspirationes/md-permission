@@ -200,9 +200,7 @@ public class SearchConditionService {
                     .filter(Objects::nonNull)
                     .map(id -> {
                         return selectByPrimaryKey(id);
-                    })
-                    .filter(searchCondition -> searchCondition == null)
-                    .count();
+                    }).filter(searchCondition -> searchCondition == null).count();
         }
         return count;
     }

@@ -59,9 +59,9 @@ public class UserGroupDetailsService {
         if (userId != null && userId > 0 && !CollectionUtils.isEmpty(userGroupIds)){
             userGroupIds.stream()
                     .filter(Objects::nonNull)
-                    .map(userGroupId -> {
-                        return userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId, userId));
-                    }).filter(Objects::nonNull).count();
+                    .forEach(userGroupId -> {
+                        userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId, userId));
+                    });
         }
     }
 
@@ -77,9 +77,9 @@ public class UserGroupDetailsService {
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(userIdList)){
             userIdList.stream()
                     .filter(Objects::nonNull)
-                    .map(userId -> {
-                       return userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId,userId));
-                    }).filter(Objects::nonNull).count();
+                    .forEach(userId -> {
+                       userGroupDetailsMapper.insertSelective(new UserGroupDetails(userGroupId,userId));
+                    });
         }
     }
 

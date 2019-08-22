@@ -204,9 +204,7 @@ public class PermissionService {
                     .filter(Objects::nonNull)
                     .map(id -> {
                         return permissionMapper.selectByPrimaryKey(id);
-                    })
-                    .filter(permission -> permission == null)
-                    .count();
+                    }).filter(permission -> permission == null).count();
         }
         return count;
     }

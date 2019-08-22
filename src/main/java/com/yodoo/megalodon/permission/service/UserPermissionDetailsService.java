@@ -75,10 +75,7 @@ public class UserPermissionDetailsService {
     public List<Integer> getUserPermissionIdsByUserId(Integer userId){
         List<UserPermissionDetails> userPermissionDetailsList = this.selectUserPermissionDetailsByUserId(userId);
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
-            return userPermissionDetailsList.stream()
-                    .filter(Objects::nonNull)
-                    .map(UserPermissionDetails::getId)
-                    .collect(Collectors.toList());
+            return userPermissionDetailsList.stream().filter(Objects::nonNull).map(UserPermissionDetails::getId).collect(Collectors.toList());
         }
         return null;
     }
@@ -101,9 +98,9 @@ public class UserPermissionDetailsService {
         if (!CollectionUtils.isEmpty(permissionIds)) {
             permissionIds.stream()
                     .filter(Objects::nonNull)
-                    .map(permissionId -> {
-                        return userPermissionDetailsMapper.insertSelective(new UserPermissionDetails(userId, permissionId));
-                    }).filter(Objects::nonNull).count();
+                    .forEach(permissionId -> {
+                        userPermissionDetailsMapper.insertSelective(new UserPermissionDetails(userId, permissionId));
+                    });
         }
     }
 
@@ -156,17 +153,15 @@ public class UserPermissionDetailsService {
         if (!CollectionUtils.isEmpty(userIds) && !CollectionUtils.isEmpty(permissionIds)){
             userIds.stream()
                     .filter(Objects::nonNull)
-                    .map(userId -> {
+                    .forEach(userId -> {
                         permissionIds.stream()
                                 .filter(Objects::nonNull)
-                                .map(permissionId -> {
+                                .forEach(permissionId -> {
                                     UserPermissionDetails userPermissionDetails = new UserPermissionDetails(userId, permissionId);
-                                    Integer insertCount = userPermissionDetailsMapper.insertSelective(userPermissionDetails);
+                                    userPermissionDetailsMapper.insertSelective(userPermissionDetails);
                                     userPermissionDetailsIds.add(userPermissionDetails.getId());
-                                    return insertCount;
-                                }).filter(Objects::nonNull).count();
-                        return null;
-                    }).count();
+                                });
+                    });
         }
 
         // 更新用户组权限关系表

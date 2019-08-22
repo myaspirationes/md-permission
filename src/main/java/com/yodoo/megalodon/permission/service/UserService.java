@@ -228,9 +228,7 @@ public class UserService {
                         .filter(Objects::nonNull)
                         .map(groupId -> {
                             return groupsService.selectGroupById(groupId);
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                        }).filter(Objects::nonNull).collect(Collectors.toList());
             }
         }
         return null;
@@ -341,7 +339,6 @@ public class UserService {
         if (!CollectionUtils.isEmpty(userPermissionIdList)) {
             // 获取管理的公司ids
             targetUserIdList = userPermissionTargetUserDetailsService.getUserIdsByUserIdAndPermissionId(userPermissionIdList);
-
         }
         return selectUserNotInIds(targetUserIdList);
     }

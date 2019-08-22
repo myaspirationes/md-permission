@@ -52,13 +52,13 @@ public class UserPermissionTargetCompanyDetailsService {
         // 增加修改后的权限
         userPermissionTargetDto.getTargetIds().stream()
                 .filter(Objects::nonNull)
-                .map(targetCompanyId ->{
+                .forEach(targetCompanyId ->{
                     UserPermissionTargetCompanyDetails userPermissionTargetCompanyDetails = new UserPermissionTargetCompanyDetails();
                     userPermissionTargetCompanyDetails.setUserId(userPermissionTargetDto.getUserId());
                     userPermissionTargetCompanyDetails.setPermissionId(userPermissionTargetDto.getPermissionId());
                     userPermissionTargetCompanyDetails.setTargetCompanyId(targetCompanyId);
-                    return userPermissionTargetCompanyDetailsMapper.insertSelective(userPermissionTargetCompanyDetails);
-                }).count();
+                    userPermissionTargetCompanyDetailsMapper.insertSelective(userPermissionTargetCompanyDetails);
+                });
     }
 
     /**
@@ -74,9 +74,7 @@ public class UserPermissionTargetCompanyDetailsService {
                         .filter(Objects::nonNull)
                         .map(company -> {
                             return copyProperties(company);
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                        }).filter(Objects::nonNull).collect(Collectors.toList());
             }
         }
         return null;
@@ -124,7 +122,7 @@ public class UserPermissionTargetCompanyDetailsService {
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
             userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionDetails -> {
+                    .forEach(userPermissionDetails -> {
                         Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
                         List<UserPermissionTargetCompanyDetails> list = userPermissionTargetCompanyDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(list)){
@@ -139,8 +137,7 @@ public class UserPermissionTargetCompanyDetailsService {
                                 userPermissionTargetCompanyDetailsDtoList.addAll(collect);
                             }
                         }
-                        return null;
-                    }).filter(Objects::nonNull).count();
+                    });
         }
         return userPermissionTargetCompanyDetailsDtoList;
 

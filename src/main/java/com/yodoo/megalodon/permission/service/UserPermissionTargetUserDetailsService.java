@@ -49,17 +49,17 @@ public class UserPermissionTargetUserDetailsService {
         // 增加修改后的权限
         userPermissionTargetDto.getTargetIds().stream()
                 .filter(Objects::nonNull)
-                .map(targetUserId ->{
+                .forEach(targetUserId ->{
                     UserPermissionTargetUserDetails userPermissionTargetUserDetails = new UserPermissionTargetUserDetails();
                     userPermissionTargetUserDetails.setUserId(userPermissionTargetDto.getUserId());
                     userPermissionTargetUserDetails.setPermissionId(userPermissionTargetDto.getPermissionId());
                     userPermissionTargetUserDetails.setTargetUserId(targetUserId);
-                    return userPermissionTargetUserDetailsMapper.insertSelective(userPermissionTargetUserDetails);
-                }).count();
+                    userPermissionTargetUserDetailsMapper.insertSelective(userPermissionTargetUserDetails);
+                });
     }
 
     /**
-     * 通过用户权限id查询获取用户ids
+     * 通过用户id , 权限id查询获取用户ids
      * @param userPermissionIdList
      * @return
      */
@@ -92,7 +92,7 @@ public class UserPermissionTargetUserDetailsService {
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
             userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionDetails -> {
+                    .forEach(userPermissionDetails -> {
                         Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
                         List<UserPermissionTargetUserDetails> targetUserList = userPermissionTargetUserDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(targetUserList)){
@@ -107,8 +107,7 @@ public class UserPermissionTargetUserDetailsService {
                                 userPermissionTargetUserDetailsDtoList.addAll(collect);
                             }
                         }
-                        return null;
-                    }).filter(Objects::nonNull).count();
+                    });
         }
         return userPermissionTargetUserDetailsDtoList;
     }

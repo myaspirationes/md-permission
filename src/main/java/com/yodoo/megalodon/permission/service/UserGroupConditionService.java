@@ -83,7 +83,7 @@ public class UserGroupConditionService {
         if (userGroupId != null && userGroupId > 0 && !CollectionUtils.isEmpty(searchConditionList)){
             searchConditionList.stream()
                     .filter(Objects::nonNull)
-                    .map(searchCondition -> {
+                    .forEach(searchCondition -> {
                         UserGroupCondition userGroupCondition = new UserGroupCondition();
                         // 用户组条件id
                         userGroupCondition.setSearchConditionId(searchCondition.getId());
@@ -93,8 +93,8 @@ public class UserGroupConditionService {
                          userGroupCondition.setOperator(searchCondition.getConditionName());
                         // 匹配值
                          userGroupCondition.setMatchValue(searchCondition.getConditionValue());
-                        return userGroupConditionMapper.insertSelective(userGroupCondition);
-                    }).filter(Objects::nonNull).count();
+                        userGroupConditionMapper.insertSelective(userGroupCondition);
+                    });
         }
     }
 

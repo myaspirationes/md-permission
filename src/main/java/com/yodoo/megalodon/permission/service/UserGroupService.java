@@ -109,9 +109,7 @@ public class UserGroupService {
                     .filter(Objects::nonNull)
                     .map(id -> {
                         return selectByPrimaryKey(id);
-                    })
-                    .filter(userGroup -> userGroup == null)
-                    .count();
+                    }).filter(userGroup -> userGroup == null).count();
         }
         return count;
     }
@@ -135,7 +133,6 @@ public class UserGroupService {
     public Integer addUserGroup(UserGroupDto userGroupDto) {
         // 参数校验
         addUserGroupParameterCheck(userGroupDto);
-
         // 插入数据
         UserGroup userGroup = new UserGroup(userGroupDto.getGroupCode(), userGroupDto.getGroupName());
         Integer insertCount = userGroupMapper.insertSelective(userGroup);
@@ -155,7 +152,6 @@ public class UserGroupService {
     public Integer editUserGroup(UserGroupDto userGroupDto) {
         // 参数校验
         UserGroup userGroup = editUserGroupParameterCheck(userGroupDto);
-
         // 更新
         userGroup.setGroupCode(userGroupDto.getGroupCode());
         userGroup.setGroupName(userGroupDto.getGroupName());
@@ -310,10 +306,8 @@ public class UserGroupService {
         Set<Integer> userIdList = userService.selectUserListByCondition(searchConditionMap);
         // 权限 ids
         Set<Integer> permissionIds = userGroupPermissionDetailsService.getPermissionIdsByUserGroupId(userGroupId);
-
         // 维护用户与用户组关系表
         userGroupDetailsService.updateUserGroupDetailsBatch(userGroupId, userIdList);
-
         // 维护用户权限详情和用户组与用户权限关系表
         userPermissionDetailsService.updateUserPermission(userGroupId, userIdList, permissionIds);
     }
@@ -327,19 +321,16 @@ public class UserGroupService {
                 || StringUtils.isBlank(userGroupDto.getGroupCode()) || StringUtils.isBlank(userGroupDto.getGroupName())) {
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-
         // 不存在不修改
         UserGroup userGroup = selectByPrimaryKey(userGroupDto.getId());
         if (userGroup == null){
             throw new PermissionException(PermissionBundleKey.USER_GROUP_NOT_EXIST, PermissionBundleKey.USER_GROUP_NOT_EXIST_MSG);
         }
-
         // 查询除自己以外是否有相同 groupCode 的数据
         UserGroup selectOtherThanOneself = userGroupMapper.selectOtherThanOneself(userGroupDto.getId(), userGroupDto.getGroupCode());
         if (selectOtherThanOneself != null){
             throw new PermissionException(PermissionBundleKey.USER_GROUP_ALREADY_EXIST, PermissionBundleKey.USER_GROUP_ALREADY_EXIST_MSG);
         }
-
         // 如果权限组和用户权限不为空,查询权限组不存在，不操作
         checkPermissionGroupIdsAndUserPermissionIds(userGroupDto);
         return userGroup;
@@ -353,7 +344,6 @@ public class UserGroupService {
         if (userGroupDto == null || StringUtils.isBlank(userGroupDto.getGroupCode()) || StringUtils.isBlank(userGroupDto.getGroupName())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-
         // 用户组 code 是否存在，存在不操作
         UserGroup userGroup = new UserGroup();
         userGroup.setGroupCode(userGroupDto.getGroupCode());
@@ -361,7 +351,6 @@ public class UserGroupService {
         if (selectUserGroupByGroupCode != null){
             throw new PermissionException(PermissionBundleKey.USER_GROUP_ALREADY_EXIST, PermissionBundleKey.USER_GROUP_ALREADY_EXIST_MSG);
         }
-
         // 如果权限组和用户权限不为空,查询权限组不存在，不操作
         checkPermissionGroupIdsAndUserPermissionIds(userGroupDto);
     }

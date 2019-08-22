@@ -56,13 +56,13 @@ public class UserPermissionTargetGroupDetailsService {
         // 添加
         userPermissionTargetDto.getTargetIds().stream()
                 .filter(Objects::nonNull)
-                .map(targetGroupId -> {
+                .forEach(targetGroupId -> {
                     UserPermissionTargetGroupDetails userPermissionTargetGroupDetails = new UserPermissionTargetGroupDetails();
                     userPermissionTargetGroupDetails.setUserId(userPermissionTargetDto.getUserId());
                     userPermissionTargetGroupDetails.setPermissionId(userPermissionTargetDto.getPermissionId());
                     userPermissionTargetGroupDetails.setTargetGroupId(targetGroupId);
-                    return userPermissionTargetGroupDetailsMapper.insertSelective(userPermissionTargetGroupDetails);
-                }).count();
+                    userPermissionTargetGroupDetailsMapper.insertSelective(userPermissionTargetGroupDetails);
+                });
     }
 
     /**
@@ -125,7 +125,7 @@ public class UserPermissionTargetGroupDetailsService {
         if (!CollectionUtils.isEmpty(userPermissionDetailsList)){
             userPermissionDetailsList.stream()
                     .filter(Objects::nonNull)
-                    .map(userPermissionDetails -> {
+                    .forEach(userPermissionDetails -> {
                         Example example = getExampleByUserIdAndPermissionId(userPermissionDetails);
                         List<UserPermissionTargetGroupDetails> list = userPermissionTargetGroupDetailsMapper.selectByExample(example);
                         if (!CollectionUtils.isEmpty(list)){
@@ -140,8 +140,7 @@ public class UserPermissionTargetGroupDetailsService {
                                 userPermissionTargetGroupDetailsDtoList.addAll(collect);
                             }
                         }
-                        return null;
-                    }).count();
+                    });
         }
         return userPermissionTargetGroupDetailsDtoList;
     }
