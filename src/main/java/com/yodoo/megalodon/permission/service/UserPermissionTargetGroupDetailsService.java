@@ -70,7 +70,7 @@ public class UserPermissionTargetGroupDetailsService {
      * @param userPermissionIdList
      * @return
      */
-    public Set<Integer>  getGroupIdsByUserIdPermissionId(List<UserPermissionDetails> userPermissionIdList) {
+    public Set<Integer>  getGroupIdsByUserIdAndPermissionId(List<UserPermissionDetails> userPermissionIdList) {
         Set<Integer> groupsIds = new HashSet<>();
         if (!CollectionUtils.isEmpty(userPermissionIdList)){
             userPermissionIdList.stream()
