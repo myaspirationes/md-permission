@@ -6,6 +6,7 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -48,7 +49,7 @@ public class PermissionConfig {
 //    }
 
     @Bean(PERMISSION_TRANSACTION_MANAGER_BEAN_NAME)
-    public DataSourceTransactionManager permissionTransactionManager(DataSource provisioningDataSource) {
+    public DataSourceTransactionManager permissionTransactionManager(@Qualifier("provisioningDataSource") DataSource provisioningDataSource) {
         return new DataSourceTransactionManager(provisioningDataSource);
     }
 
@@ -60,7 +61,7 @@ public class PermissionConfig {
      */
     @Bean(PERMISSION_SQL_SESSION_FACTORY_BEAN_NAME)
     @Primary
-    public SqlSessionFactory permissionSqlSessionFactory(DataSource provisioningDataSource) throws Exception {
+    public SqlSessionFactory permissionSqlSessionFactory(@Qualifier("provisioningDataSource") DataSource provisioningDataSource) throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         sqlSessionFactoryBean.setTransactionFactory(new SpringManagedTransactionFactory());
         sqlSessionFactoryBean.setEnvironment("development");
