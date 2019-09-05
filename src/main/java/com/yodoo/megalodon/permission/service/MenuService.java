@@ -7,6 +7,7 @@ import com.yodoo.megalodon.permission.config.PermissionConfig;
 import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.MenuDto;
 import com.yodoo.megalodon.permission.entity.Menu;
+import com.yodoo.megalodon.permission.entity.Permission;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.MenuMapper;
@@ -41,6 +42,9 @@ public class MenuService {
 
     @Autowired
     private MenuPermissionDetailsService menuPermissionDetailsService;
+
+    @Autowired
+    private PermissionService permissionService;
 
     /**
      * 条件分页查询菜单 TODO
@@ -136,18 +140,6 @@ public class MenuService {
                 || StringUtils.isBlank(menuDto.getMenuTarget()) || StringUtils.isBlank(menuDto.getOrderNo())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        if (!menuDto.getMenuTarget().startsWith(PermissionConstants.STARTS_WITH)){
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        if (menuDto.getParentId() != null && menuDto.getParentId() < 0){
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        if (menuDto.getParentId() != null || menuDto.getParentId() > 0){
-            Menu menu = selectByPrimaryKey(menuDto.getParentId());
-            if (menu == null){
-                throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-            }
-        }
         Example example = new Example(Menu.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("menuCode", menuDto.getMenuCode());
@@ -155,6 +147,7 @@ public class MenuService {
         if (!CollectionUtils.isEmpty(menuList)) {
             throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
         }
+        parameterCheck(menuDto);
     }
 
     /**
@@ -167,21 +160,9 @@ public class MenuService {
                 || StringUtils.isBlank(menuDto.getMenuName()) || StringUtils.isBlank(menuDto.getMenuTarget()) || StringUtils.isBlank(menuDto.getOrderNo())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        if (!menuDto.getMenuTarget().startsWith(PermissionConstants.STARTS_WITH)){
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        if (menuDto.getParentId() != null && menuDto.getParentId() < 0){
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
         Menu menu = selectByPrimaryKey(menuDto.getId());
         if (menu == null) {
             throw new PermissionException(PermissionBundleKey.MENU_NOT_EXIST, PermissionBundleKey.MENU_NOT_EXIST_MSG);
-        }
-        if (menuDto.getParentId() != null || menuDto.getParentId() > 0){
-            Menu menuByParentId = selectByPrimaryKey(menuDto.getParentId());
-            if (menuByParentId == null){
-                throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-            }
         }
         Example example = new Example(Menu.class);
         Example.Criteria criteria = example.createCriteria();
@@ -194,7 +175,38 @@ public class MenuService {
         if (menuByCode != null){
             throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
         }
+        parameterCheck(menuDto);
         return menu;
+    }
+
+    /**
+     * 参数校验
+     * @param menuDto
+     */
+    private void parameterCheck(MenuDto menuDto){
+        if (!menuDto.getMenuTarget().startsWith(PermissionConstants.STARTS_WITH)){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        if (menuDto.getParentId() != null && menuDto.getParentId() < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        if (menuDto.getParentId() != null || menuDto.getParentId() > 0){
+            Menu menuByParentId = selectByPrimaryKey(menuDto.getParentId());
+            if (menuByParentId == null){
+                throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+            }
+        }
+        List<Integer> permissionIdList = menuDto.getPermissionIdList();
+        if (!CollectionUtils.isEmpty(permissionIdList)){
+            permissionIdList.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(permissionId -> {
+                        Permission permission = permissionService.selectByPrimaryKey(permissionId);
+                        if (permission == null){
+                            throw new PermissionException(PermissionBundleKey.PERMISSION_NOT_EXIST, PermissionBundleKey.PERMISSION_NOT_EXIST_MSG);
+                        }
+                    });
+        }
     }
 
     /**

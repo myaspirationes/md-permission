@@ -210,6 +210,15 @@ public class PermissionService {
     }
 
     /**
+     * 通过主键查询
+     * @param id
+     * @return
+     */
+    public Permission selectByPrimaryKey(Integer id){
+        return permissionMapper.selectByPrimaryKey(id);
+    }
+
+    /**
      * 复制
      * @param permissionList
      * @return
