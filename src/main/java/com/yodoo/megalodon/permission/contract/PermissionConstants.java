@@ -30,4 +30,6 @@ public interface PermissionConstants {
      * 字符串中全是0到9数字
      */
     String SEARCH_CONDITION_VALUE = "[0-9]{1,}";
+
+    String STARTS_WITH = "/";
 }

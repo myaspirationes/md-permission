@@ -114,10 +114,16 @@ public interface PermissionBundleKey {
     String MENU_EXIST_MSG = "菜单已存在";
 
     /**
-     *  菜单已存在
+     *  菜单不存在
      **/
     String MENU_NOT_EXIST = PERMISSION_PREFIX + "MENU.NOT.EXIST";
     String MENU_NOT_EXIST_MSG = "菜单不存在";
+
+    /**
+     *  菜单还使用存在
+     **/
+    String MENU_ALREADY_USE = PERMISSION_PREFIX + "MENU.ALREADY.USE";
+    String MENU_ALREADY_USE_MSG = "菜单还在使用存在";
 
     /**
      *  查询条件已存在

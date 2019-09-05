@@ -4,13 +4,13 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.yodoo.megalodon.permission.common.PageInfoDto;
 import com.yodoo.megalodon.permission.config.PermissionConfig;
+import com.yodoo.megalodon.permission.contract.PermissionConstants;
 import com.yodoo.megalodon.permission.dto.MenuDto;
 import com.yodoo.megalodon.permission.entity.Menu;
 import com.yodoo.megalodon.permission.exception.PermissionBundleKey;
 import com.yodoo.megalodon.permission.exception.PermissionException;
 import com.yodoo.megalodon.permission.mapper.MenuMapper;
 import com.yodoo.megalodon.permission.util.JsonUtils;
-import com.yodoo.megalodon.permission.util.RequestPrecondition;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,16 +75,7 @@ public class MenuService {
     public void addMenu(MenuDto menuDto) {
         logger.info("MenuService#addMenu menuDto:{}", JsonUtils.obj2json(menuDto));
         // 参数校验
-        RequestPrecondition.checkArgumentsNotEmpty(menuDto.getMenuCode(), menuDto.getMenuName(),
-                menuDto.getMenuTarget(), menuDto.getOrderNo());
-        // 验证code是否存在
-        Example example = new Example(Menu.class);
-        Example.Criteria criteria = example.createCriteria();
-        criteria.andEqualTo("menuCode", menuDto.getMenuCode());
-        List<Menu> menuList = menuMapper.selectByExample(example);
-        if (!CollectionUtils.isEmpty(menuList)) {
-            throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
-        }
+        addMenuParameterCheck(menuDto);
         Menu menu = new Menu();
         BeanUtils.copyProperties(menuDto, menu);
         menuMapper.insertSelective(menu);
@@ -96,17 +87,101 @@ public class MenuService {
      * 更新菜单
      * @Author houzhen
      * @Date 13:45 2019/8/7
-    **/
+     **/
     public void updateMenu(MenuDto menuDto) {
         logger.info("MenuService#updateMenu menuDto:{}", JsonUtils.obj2json(menuDto));
         // 参数校验
+        Menu menu = updateMenuParameterCheck(menuDto);
+        // 更新
+        BeanUtils.copyProperties(menuDto, menu);
+        menuMapper.updateByPrimaryKeySelective(menu);
+        // 更新权限
+        menuPermissionDetailsService.updateMenuPermission(menuDto.getPermissionIdList(), menu.getId());
+    }
+
+    /**
+     * 删除菜单
+     * @Author houzhen
+     * @Date 15:25 2019/8/7
+     **/
+    public void deleteMenu(Integer id) {
+        logger.info("MenuService#updateMenu menuDto:{}", JsonUtils.obj2json(id));
+        if (id == null) {
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        // 查询菜单
+        Menu menu = menuMapper.selectByPrimaryKey(id);
+        if (menu == null) {
+            throw new PermissionException(PermissionBundleKey.MENU_NOT_EXIST, PermissionBundleKey.MENU_NOT_EXIST_MSG);
+        }
+       Example example = new Example(Menu.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("parentId", id);
+        List<Menu> menuList = menuMapper.selectByExample(example);
+        if (!CollectionUtils.isEmpty(menuList)){
+            throw new PermissionException(PermissionBundleKey.MENU_ALREADY_USE, PermissionBundleKey.MENU_ALREADY_USE_MSG);
+        }
+        // 删除菜单权限
+        menuPermissionDetailsService.deleteMenuPermission(menu.getId());
+        // 删除菜单
+        menuMapper.deleteByPrimaryKey(menu.getId());
+    }
+
+    /**
+     * 添加参数校验
+     * @param menuDto
+     */
+    private void addMenuParameterCheck(MenuDto menuDto) {
+        if (menuDto == null || StringUtils.isBlank(menuDto.getMenuCode()) || StringUtils.isBlank(menuDto.getMenuName())
+                || StringUtils.isBlank(menuDto.getMenuTarget()) || StringUtils.isBlank(menuDto.getOrderNo())){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        if (!menuDto.getMenuTarget().startsWith(PermissionConstants.STARTS_WITH)){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        if (menuDto.getParentId() != null && menuDto.getParentId() < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        if (menuDto.getParentId() != null || menuDto.getParentId() > 0){
+            Menu menu = selectByPrimaryKey(menuDto.getParentId());
+            if (menu == null){
+                throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+            }
+        }
+        Example example = new Example(Menu.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("menuCode", menuDto.getMenuCode());
+        List<Menu> menuList = menuMapper.selectByExample(example);
+        if (!CollectionUtils.isEmpty(menuList)) {
+            throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
+        }
+    }
+
+    /**
+     * 更新参数校验
+     * @param menuDto
+     * @return
+     */
+    private Menu updateMenuParameterCheck(MenuDto menuDto) {
         if (menuDto == null || menuDto.getId() == null || menuDto.getId() < 0 || StringUtils.isBlank(menuDto.getMenuCode())
                 || StringUtils.isBlank(menuDto.getMenuName()) || StringUtils.isBlank(menuDto.getMenuTarget()) || StringUtils.isBlank(menuDto.getOrderNo())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        Menu menu = menuMapper.selectByPrimaryKey(menuDto.getId());
+        if (!menuDto.getMenuTarget().startsWith(PermissionConstants.STARTS_WITH)){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        if (menuDto.getParentId() != null && menuDto.getParentId() < 0){
+            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+        }
+        Menu menu = selectByPrimaryKey(menuDto.getId());
         if (menu == null) {
             throw new PermissionException(PermissionBundleKey.MENU_NOT_EXIST, PermissionBundleKey.MENU_NOT_EXIST_MSG);
+        }
+        if (menuDto.getParentId() != null || menuDto.getParentId() > 0){
+            Menu menuByParentId = selectByPrimaryKey(menuDto.getParentId());
+            if (menuByParentId == null){
+                throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
+            }
         }
         Example example = new Example(Menu.class);
         Example.Criteria criteria = example.createCriteria();
@@ -119,31 +194,15 @@ public class MenuService {
         if (menuByCode != null){
             throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
         }
-        // 更新
-        BeanUtils.copyProperties(menuDto, menu, "menuCode");
-        menuMapper.updateByPrimaryKeySelective(menu);
-        // 更新权限
-        menuPermissionDetailsService.updateMenuPermission(menuDto.getPermissionIdList(), menu.getId());
+        return menu;
     }
 
     /**
-     * 删除菜单
-     * @Author houzhen
-     * @Date 15:25 2019/8/7
-    **/
-    public void deleteMenu(Integer id) {
-        logger.info("MenuService#updateMenu menuDto:{}", JsonUtils.obj2json(id));
-        if (id == null) {
-            throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
-        }
-        // 查询菜单
-        Menu menu = menuMapper.selectByPrimaryKey(id);
-        if (menu == null) {
-            throw new PermissionException(PermissionBundleKey.MENU_NOT_EXIST, PermissionBundleKey.MENU_NOT_EXIST_MSG);
-        }
-        // 删除菜单权限
-        menuPermissionDetailsService.deleteMenuPermission(menu.getId());
-        // 删除菜单
-        menuMapper.deleteByPrimaryKey(menu.getId());
+     * 通过社键查询
+     * @param id
+     * @return
+     */
+    private Menu selectByPrimaryKey(Integer id){
+        return menuMapper.selectByPrimaryKey(id);
     }
 }
