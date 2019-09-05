@@ -190,7 +190,7 @@ public class MenuService {
         if (menuDto.getParentId() != null && menuDto.getParentId() < 0){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
-        if (menuDto.getParentId() != null || menuDto.getParentId() > 0){
+        if (menuDto.getParentId() != null && menuDto.getParentId() > 0){
             Menu menuByParentId = selectByPrimaryKey(menuDto.getParentId());
             if (menuByParentId == null){
                 throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
