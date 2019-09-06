@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -56,18 +55,7 @@ public class MenuService {
         Example.Criteria criteria = example.createCriteria();
         Page<?> pages = PageHelper.startPage(menuDto.getPageNum(), menuDto.getPageSize());
         List<Menu> select = menuMapper.selectByExample(example);
-        List<MenuDto> collect = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(select)) {
-            collect = select.stream()
-                    .filter(Objects::nonNull)
-                    .map(menu -> {
-                        MenuDto dto = new MenuDto();
-                        BeanUtils.copyProperties(menu, dto);
-                        return dto;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        }
+        List<MenuDto> collect = copyProperties(select);
         return new PageInfoDto<MenuDto>(pages.getPageNum(), pages.getPageSize(), pages.getTotal(), pages.getPages(), collect);
     }
 
@@ -140,6 +128,7 @@ public class MenuService {
                 || StringUtils.isBlank(menuDto.getMenuTarget()) || StringUtils.isBlank(menuDto.getOrderNo())){
             throw new PermissionException(PermissionBundleKey.PARAMS_ERROR, PermissionBundleKey.PARAMS_ERROR_MSG);
         }
+        parameterCheck(menuDto);
         Example example = new Example(Menu.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("menuCode", menuDto.getMenuCode());
@@ -147,7 +136,6 @@ public class MenuService {
         if (!CollectionUtils.isEmpty(menuList)) {
             throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
         }
-        parameterCheck(menuDto);
     }
 
     /**
@@ -164,6 +152,8 @@ public class MenuService {
         if (menu == null) {
             throw new PermissionException(PermissionBundleKey.MENU_NOT_EXIST, PermissionBundleKey.MENU_NOT_EXIST_MSG);
         }
+        parameterCheck(menuDto);
+
         Example example = new Example(Menu.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andNotEqualTo("id", menuDto.getId());
@@ -175,7 +165,6 @@ public class MenuService {
         if (menuByCode != null){
             throw new PermissionException(PermissionBundleKey.MENU_EXIST, PermissionBundleKey.MENU_EXIST_MSG);
         }
-        parameterCheck(menuDto);
         return menu;
     }
 
@@ -216,5 +205,37 @@ public class MenuService {
      */
     private Menu selectByPrimaryKey(Integer id){
         return menuMapper.selectByPrimaryKey(id);
+    }
+
+    /**
+     * 复制
+     * @param menuList
+     * @return
+     */
+    private List<MenuDto> copyProperties(List<Menu> menuList){
+        if (!CollectionUtils.isEmpty(menuList)){
+            return menuList.stream()
+                    .filter(Objects::nonNull)
+                    .map(menu -> {
+                        return copyProperties(menu);
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    /**
+     * 复制
+     * @param menu
+     * @return
+     */
+    private MenuDto copyProperties(Menu menu){
+        if (menu != null){
+            MenuDto groupsDto = new MenuDto();
+            BeanUtils.copyProperties(menu, groupsDto);
+            return groupsDto;
+        }
+        return null;
     }
 }
