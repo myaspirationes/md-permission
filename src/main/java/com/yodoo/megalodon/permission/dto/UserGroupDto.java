@@ -2,6 +2,7 @@ package com.yodoo.megalodon.permission.dto;
 
 
 import com.yodoo.megalodon.permission.common.BaseDto;
+import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.Null;
 import java.util.List;
@@ -17,36 +18,43 @@ public class UserGroupDto extends BaseDto {
     /**
      * 用户组code
      **/
+    @ApiModelProperty(value = "用户组code", required = true, example = "test_group_code", position = 1)
     private String groupCode;
 
     /**
      * 用户组名称
      **/
+    @ApiModelProperty(value = "用户组名称", required = true, example = "test_group_name", position = 2)
     private String groupName;
 
     /**
      * 当前组下用户总数
      */
+    @ApiModelProperty(hidden = true)
     private Integer userTotal;
 
     /**
      * 权限组 ids
      */
+    @ApiModelProperty(value = "权限组 ids", required = false, example = "[1,2]", position = 3)
     private Set<Integer> permissionGroupIds;
 
     /**
      * 查询条件 ids
      */
+    @ApiModelProperty(value = "查询条件 ids", required = false, example = "[1,2]", position = 4)
     private List<Integer> searchConditionIds;
 
     /**
      * 用户详情
      */
+    @ApiModelProperty(hidden = true)
     private List<UserDto> userDtoList;
 
     /**
      * 用户组筛选条件详情
      */
+    @ApiModelProperty(hidden = true)
      private List<SearchConditionDto> searchConditionDtoList;
 
    public String getGroupCode() {

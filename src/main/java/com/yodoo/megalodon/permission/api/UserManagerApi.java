@@ -179,4 +179,13 @@ public class UserManagerApi {
     public void userGroupBatchProcessing(Integer userGroupId){
         userGroupService.userGroupBatchProcessing(userGroupId);
     }
+
+    /**
+     * 通过用户id查询用户详情
+     * @param id
+     * @return
+     */
+    public UserDto getUserById(Integer id){
+        return userService.getUserDtoByUserId(id);
+    }
 }

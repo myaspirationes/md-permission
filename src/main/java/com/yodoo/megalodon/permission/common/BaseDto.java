@@ -1,5 +1,7 @@
 package com.yodoo.megalodon.permission.common;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import java.time.Instant;
 import java.util.Date;
 
@@ -14,31 +16,37 @@ public class BaseDto {
     /**
      * 当前页
      */
+    @ApiModelProperty(hidden = true)
     private int pageNum;
 
     /**
      * 页面大小
      */
+    @ApiModelProperty(hidden = true)
     private int pageSize;
 
     /**
      * 创建人
      **/
+    @ApiModelProperty(hidden = true)
     private Integer createdBy;
 
     /**
      * 创建日期
      **/
+    @ApiModelProperty(hidden = true)
     private Instant createdTime;
 
     /**
      * 更新人
      **/
+    @ApiModelProperty(hidden = true)
     private Integer lastModifiedBy;
 
     /**
      * 最后一次修改时间
      **/
+    @ApiModelProperty(hidden = true)
     private Instant lastModifiedTime;
 
     public BaseDto() {

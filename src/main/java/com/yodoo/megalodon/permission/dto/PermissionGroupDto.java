@@ -1,6 +1,7 @@
 package com.yodoo.megalodon.permission.dto;
 
 import com.yodoo.megalodon.permission.common.BaseDto;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Set;
 
@@ -14,16 +15,19 @@ public class PermissionGroupDto extends BaseDto {
     /**
      * 权限组code
      **/
+    @ApiModelProperty(value = "权限组code", required = true, example = "permisson_group_code", position = 1)
     private String groupCode;
 
     /**
      * 权限组名称
      **/
+    @ApiModelProperty(value = "权限组名称", required = true, example = "permission_group_name", position = 2)
     private String groupName;
 
     /**
      * 权限ids
      */
+    @ApiModelProperty(value = "权限ids", required = true, example = "[1,2]", position = 3)
     private Set<Integer> permissionIds;
 
     public PermissionGroupDto() {

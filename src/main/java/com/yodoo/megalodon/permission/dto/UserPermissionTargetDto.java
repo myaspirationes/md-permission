@@ -1,6 +1,7 @@
 package com.yodoo.megalodon.permission.dto;
 
 import com.yodoo.megalodon.permission.common.BaseDto;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Set;
 
@@ -14,16 +15,19 @@ public class UserPermissionTargetDto extends BaseDto {
     /**
      * 用户id
      */
+    @ApiModelProperty(value = "用户id", required = true, example = "1", position = 1)
     private Integer userId;
 
     /**
      * 用户权限id
      */
+    @ApiModelProperty(value = "用户权限id", required = true, example = "1", position = 2)
     private Integer permissionId;
 
     /**
-     * 目标集团、目标公司或目标用户
+     * 目标集团、目标公司或目标用户ids
      */
+    @ApiModelProperty(value = "目标集团、目标公司或目标用户ids", required = true, example = "[1,2]", position = 3)
     private Set<Integer> targetIds;
 
     public Integer getUserId() {

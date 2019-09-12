@@ -2,6 +2,7 @@ package com.yodoo.megalodon.permission.dto;
 
 
 import com.yodoo.megalodon.permission.common.BaseDto;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.Set;
@@ -16,61 +17,73 @@ public class UserDto extends BaseDto {
     /**
      * 父id
      **/
+    @ApiModelProperty(value = "父id", required = false, example = "1", position = 1)
     private Integer parentId;
 
     /**
      * 账号
      **/
+    @ApiModelProperty(value = "账号", required = true, example = "account_name", position = 2)
     private String account;
 
     /**
      * 用户名称
      **/
+    @ApiModelProperty(value = "用户名称", required = true, example = "user_name", position = 3)
     private String name;
 
     /**
      * 密码
      **/
+    @ApiModelProperty(hidden = true)
     private String password;
 
     /**
      * 邮箱
      **/
+    @ApiModelProperty(value = "邮箱", required = true, example = "user_email", position = 4)
     private String email;
 
     /**
      * 区域
      **/
+    @ApiModelProperty(value = "区域", required = true, example = "shanghai", position = 5)
     private String region;
 
     /**
      * 岗位
      **/
+    @ApiModelProperty(value = "岗位", required = true, example = "user_post", position = 6)
     private String post;
 
     /**
      * 性别：0 没指定性别，1 男， 2 女
      **/
+    @ApiModelProperty(value = "性别：0 没指定性别，1 男， 2 女", required = true, example = "0", position = 7)
     private Integer sex;
 
     /**
      * 出生日期
      **/
+    @ApiModelProperty(value = "出生日期", required = true, example = "2019-10-01", position = 8)
     private Date birthday;
 
     /**
      * 电话
      **/
+    @ApiModelProperty(value = "电话", required = true, example = "13804389438", position = 9)
     private String phone;
 
     /**
      * 状态，0：启用 1：停用
      **/
+    @ApiModelProperty(hidden = true)
     private Integer status;
 
     /**
      * 用户组ids
      */
+    @ApiModelProperty(hidden = true)
     private Set<Integer> userGroupIds;
 
     public Integer getParentId() {
